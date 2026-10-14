@@ -1,0 +1,10 @@
+{
+  "name": "GL Ventures",
+  "short_name": "GL Ventures",
+  "lang": "de-AT",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#ffffff",
+  "theme_color": "#0f172a",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

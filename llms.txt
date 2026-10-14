@@ -1,0 +1,17 @@
+# GL Ventures
+
+> [Ein Satz: Was GL Ventures ist und tut, für wen, wo. Wird von KI-Suchmaschinen und Assistenten als Kurzbeschreibung genutzt.]
+
+GL Ventures ist ein Unternehmen mit Sitz in [Ort], Österreich.
+
+## Kernfakten
+- Firmenwortlaut: [lt. Firmenbuch]
+- Sitz: [Adresse], Österreich
+- Tätigkeit: [Kerngeschäft]
+- Kontakt: [office@gl-ventures.at]
+- Website: https://gl-ventures.at/
+
+## Seiten
+- [Startseite](https://gl-ventures.at/): Leistungen, Über uns, FAQ, Kontakt
+- [Impressum](https://gl-ventures.at/impressum.html): Offenlegung gem. § 5 ECG, § 14 UGB, § 25 MedienG
+- [Datenschutz](https://gl-ventures.at/datenschutz.html): Datenschutzerklärung gem. DSGVO
