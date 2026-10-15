@@ -6,6 +6,7 @@
 Content lives in src/content.py, styles/scripts/images in src/static.
 Upload the contents of ./public to the web root.
 """
+import base64
 import datetime
 import hashlib
 import json
@@ -39,6 +40,7 @@ ICON = {
     "phone": '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>',
     "pin": '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12Z"/><circle cx="12" cy="9" r="2.5"/></svg>',
     "check": '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>',
+    "save": '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10" cy="8" r="3.5"/><path d="M3.5 19a6.5 6.5 0 0 1 11.6-4M18 14v6m-3-3h6"/></svg>',
     "linkedin": '<svg class="i" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28ZM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12ZM7.12 20.45H3.56V9h3.56v11.45ZM22.23 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0h.01Z"/></svg>',
 }
 
@@ -54,6 +56,10 @@ SECTOR_ICON["Digitalisation"] = SECTOR_ICON["Digitalisierung"]
 
 def sector_icon(title):
     return f'<svg class="sector-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true">{SECTOR_ICON[title]}</svg>'
+
+
+def og_image_name(L):
+    return "og-image.jpg" if L["lang"] == "de" else "og-image-en.jpg"
 
 
 def service_path(L, sid):
@@ -82,12 +88,14 @@ def org_ld(L):
         "@id": ORG_ID,
         "name": SITE["name"],
         "legalName": SITE["legal_name"],
+        "alternateName": [SITE["legal_name"], f"{SITE['name']} {SITE['city'][L['lang']]}"],
         "url": f"{D}/",
         "description": L["home"]["description"],
         "slogan": L["ui"]["tagline"],
         "logo": {"@type": "ImageObject", "url": f"{D}/assets/logo-512.png", "width": 512, "height": 512},
         "image": f"{D}/assets/og-image.jpg",
         "address": address_ld(L),
+        "hasMap": SITE["maps"],
         "geo": {"@type": "GeoCoordinates", "latitude": SITE["geo"]["lat"], "longitude": SITE["geo"]["lng"]},
         "telephone": SITE["people"][0]["phone"],
         "email": SITE["people"][0]["email"],
@@ -192,7 +200,7 @@ def webpage_ld(L, url, title, description, extra=None):
         "isPartOf": {"@id": f"{D}/#website"},
         "about": {"@id": ORG_ID},
         "dateModified": TODAY,
-        "primaryImageOfPage": f"{D}/assets/og-image.jpg",
+        "primaryImageOfPage": f"{D}/assets/{og_image_name(L)}",
     }
     page.update(extra or {})
     return page
@@ -233,6 +241,7 @@ def head(L, *, path, alt_path, title, description, graph, robots="index,follow,m
             f'<link rel="alternate" hreflang="x-default" href="{D}{de_path}">'
         )
     og_alt = "en_GB" if L["lang"] == "de" else "de_AT"
+    og_img = f"{D}/assets/{og_image_name(L)}"
     return f"""<!doctype html>
 <html lang="{L['lang']}">
 <head>
@@ -248,8 +257,8 @@ def head(L, *, path, alt_path, title, description, graph, robots="index,follow,m
 <link rel="canonical" href="{url}">{alternates}
 <meta property="og:type" content="website"><meta property="og:site_name" content="{e(SITE['name'])}"><meta property="og:locale" content="{L['locale']}"><meta property="og:locale:alternate" content="{og_alt}">
 <meta property="og:url" content="{url}"><meta property="og:title" content="{e(title)}"><meta property="og:description" content="{e(description)}">
-<meta property="og:image" content="{D}/assets/og-image.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="{e(SITE['name'])}: {e(L['ui']['tagline'])}">
-<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="{e(title)}"><meta name="twitter:description" content="{e(description)}"><meta name="twitter:image" content="{D}/assets/og-image.jpg">
+<meta property="og:image" content="{og_img}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="{e(SITE['name'])}: {e(L['ui']['tagline'])}">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="{e(title)}"><meta name="twitter:description" content="{e(description)}"><meta name="twitter:image" content="{og_img}">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <link rel="alternate" type="text/markdown" title="LLM summary" href="/llms.txt">
 <link rel="preload" href="/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>{hero}
@@ -266,9 +275,9 @@ def header(L, *, alt_path, home, plain=False):
     base = "" if home else h
     links = [
         (f"{base}#services", ui["services"]),
+        (f"{base}#about", ui["about"]),
         (f"{base}#sectors", ui["sectors"]),
         (f"{base}#approach", ui["approach"]),
-        (f"{base}#about", ui["about"]),
         (f"{base}#faq", ui["faq"]),
     ]
     nav = "".join(f'<a class="nav-link" href="{href}">{e(label)}</a>' for href, label in links)
@@ -279,7 +288,7 @@ def header(L, *, alt_path, home, plain=False):
     return f"""<body class="{'page-home' if home else ('page-plain' if plain else 'page-sub')}">
 <a class="skip-link" href="#main">{e(ui['skip'])}</a>
 <header class="site-header" id="header"><div class="wrap header-inner">
-<a class="brand" href="{h}" aria-label="{e(SITE['name'])}, {e(ui['home'])}"><span class="brand-mark" aria-hidden="true">GL</span><span class="brand-word">Ventures</span></a>
+<a class="brand" href="{h}" title="{e(ui['home'])}"><span class="brand-mark">GL</span> <span class="brand-word">Ventures</span></a>
 <nav class="nav" id="main-nav" aria-label="{e(ui['nav_label'])}">{nav}<a class="nav-link nav-cta" href="{base}#contact">{e(ui['contact'])}{ICON['arrow']}</a></nav>
 <div class="header-tools"><div class="lang-switch">{switch}</div>
 <button class="menu-toggle" type="button" aria-controls="main-nav" aria-expanded="false" aria-label="{e(ui['menu_open'])}" data-open-label="{e(ui['menu_open'])}" data-close-label="{e(ui['menu_close'])}"><span></span></button></div>
@@ -294,11 +303,12 @@ def footer(L):
         f'<li><a href="{service_path(L, sid)}">{e(L["services"][sid]["name"])}</a></li>' for sid in SERVICE_IDS
     )
     people = "".join(
-        f'<li><a href="mailto:{p["email"]}">{p["email"]}</a></li>' for p in SITE["people"]
+        f'<li class="footer-person"><span>{e(p["name"])}</span><a href="tel:{p["phone"]}">{p["phone_display"]}</a><a href="mailto:{p["email"]}">{p["email"]}</a></li>'
+        for p in SITE["people"]
     )
     return f"""<footer class="site-footer"><div class="wrap">
 <div class="footer-grid">
-<div class="footer-brand"><a class="brand" href="{L['paths']['home']}"><span class="brand-mark" aria-hidden="true">GL</span><span class="brand-word">Ventures</span></a><p>{e(ui['tagline'])}</p></div>
+<div class="footer-brand"><a class="brand" href="{L['paths']['home']}"><span class="brand-mark">GL</span> <span class="brand-word">Ventures</span></a><p>{e(ui['tagline'])}</p></div>
 <div><p class="footer-title">{e(ui['services'])}</p><ul>{services}</ul></div>
 <div><p class="footer-title">{e(ui['contact'])}</p><ul>{people}</ul></div>
 <div><p class="footer-title">{e(ui['location'])}</p><address>{e(SITE['legal_name'])}<br>{e(SITE['street'])}<br>{SITE['postal_code']} {e(SITE['city'][L['lang']])}, {e(SITE['country'][L['lang']])}</address></div>
@@ -316,7 +326,7 @@ def section_head(eyebrow, title, lead=None, hid=None, cls=""):
     return f'<div class="section-head {cls} reveal"><div><p class="eyebrow">{e(eyebrow)}</p><h2 id="{hid}">{e(title)}</h2></div>{lead_html}</div>'
 
 
-def disclosures(items, group, numbered=True):
+def disclosures(items, group, numbered=False):
     out = []
     for i, f in enumerate(items):
         num = f'<span class="num">{i + 1:02d}</span>' if numbered else ""
@@ -332,19 +342,39 @@ def contact_cards(L):
     cards = []
     for p in SITE["people"]:
         t = L["people"][p["id"]]
-        cards.append(
-            f'<div class="contact-card"><img src="/assets/{p["image"]}-480.webp" width="480" height="{round(p["image_h"] / 2)}" alt="" loading="lazy" decoding="async">'
-            f'<div><h3>{e(p["name"])}</h3><p class="meta">{e(t["role"])}</p>'
-            f'<a class="contact-line" href="mailto:{p["email"]}">{ICON["mail"]}<span>{p["email"]}</span></a>'
-            f'<a class="contact-line" href="tel:{p["phone"]}">{ICON["phone"]}<span>{p["phone_display"]}</span></a></div></div>'
-        )
+        cards.append(f"""<article class="contact-card" id="contact-{p['id']}">
+<div class="contact-person"><img src="/assets/{p['image']}-160.webp" width="160" height="160" alt="" loading="lazy" decoding="async"><div><h3>{e(p['name'])}</h3><p class="meta">{e(t['role'])}</p></div></div>
+<div class="contact-actions">
+<a class="action action-primary" href="tel:{p['phone']}">{ICON['phone']}<span>{p['phone_display']}</span></a>
+<a class="action action-primary" href="mailto:{p['email']}">{ICON['mail']}<span>{p['email']}</span></a>
+<a class="action" href="/vcard/{p['id']}.vcf" download="{p['id']}.vcf">{ICON['save']}<span>{e(ui['save_contact'])}</span></a>
+<a class="action" href="{p['linkedin']}" target="_blank" rel="noopener noreferrer">{ICON['linkedin']}<span>LinkedIn</span><span class="sr-only">: {e(p['name'])}</span></a>
+</div></article>""")
     return "".join(cards)
+
+
+def address_line(L):
+    return f"{e(SITE['street'])}, {SITE['postal_code']} {e(SITE['city'][L['lang']])}, {e(SITE['country'][L['lang']])}"
+
+
+def contact_address(L):
+    return (f'<p class="cta-address">{ICON["pin"]}<span>{address_line(L)}<br>'
+            f'<a href="{e(SITE["maps"])}" target="_blank" rel="noopener noreferrer">{e(L["ui"]["route"])}</a></span></p>')
+
+
+def quick_contact(L):
+    """Mobile bar: business-card visitors usually know which partner they met."""
+    links = "".join(
+        f'<a href="#contact-{p["id"]}"><img src="/assets/{p["image"]}-160.webp" width="160" height="160" alt="" loading="lazy" decoding="async"><span>{e(p["name"])}</span></a>'
+        for p in SITE["people"]
+    )
+    return f'<nav class="quick-contact" aria-label="{e(L["ui"]["quick_contact"])}">{links}</nav>\n'
 
 
 def cta_band(L):
     ui = L["ui"]
     return f"""<section class="cta-band" id="contact" aria-labelledby="cta-title"><div class="wrap">
-<div class="cta-inner reveal"><div><p class="eyebrow">{e(ui['contact'])}</p><h2 id="cta-title">{e(ui['cta_title'])}</h2><p class="lead">{e(ui['cta_text'])}</p></div>
+<div class="cta-inner reveal"><div><p class="eyebrow">{e(ui['contact'])}</p><h2 id="cta-title">{e(ui['cta_title'])}</h2><p class="lead">{e(ui['cta_text'])}</p>{contact_address(L)}</div>
 <div class="contact-cards">{contact_cards(L)}</div></div>
 </div></section>
 """
@@ -372,26 +402,20 @@ def page_home(L):
         faq_ld(url, H["faq"]),
     ]
 
-    service_index = "".join(
-        f'<a href="#{sid}"><span class="num">{i + 1:02d}</span><span>{e(L["services"][sid]["name"])}</span>{ICON["down"]}</a>'
-        for i, sid in enumerate(SERVICE_IDS)
-    )
     audiences = "".join(
-        f'<article class="audience reveal"><span class="num">{i + 1:02d}</span><h3>{e(a["title"])}</h3><p>{e(a["text"])}</p></article>'
-        for i, a in enumerate(H["audiences"])
+        f'<article class="audience reveal"><h3>{e(a["title"])}</h3><p>{e(a["text"])}</p></article>'
+        for a in H["audiences"]
     )
 
     services = []
     for i, sid in enumerate(SERVICE_IDS):
         s = L["services"][sid]
-        mods = "".join(
-            f'<li><span class="num">{j + 1:02d}</span><div><h4>{e(m["title"])}</h4><p>{e(m["text"])}</p></div></li>'
-            for j, m in enumerate(s["modules"])
-        )
+        points = "".join(f'<li>{ICON["check"]}<span>{e(m["title"])}</span></li>' for m in s["modules"])
         services.append(f"""<article class="service reveal" id="{sid}" aria-labelledby="{sid}-title">
-<div class="service-head"><p class="eyebrow">{i + 1:02d} / {e(s['kicker'])}</p><h3 id="{sid}-title">{e(s['name'])}</h3><p class="service-tagline">{e(s['tagline'])}</p>
-<p class="service-summary">{e(s['summary'])}</p><a class="button button-ghost" href="{service_path(L, sid)}">{e(ui['more'])}<span class="sr-only">: {e(s['name'])}</span>{ICON['arrow']}</a></div>
-<ol class="modules">{mods}</ol></article>""")
+<p class="eyebrow">{i + 1:02d} / {e(s['kicker'])}</p><h3 id="{sid}-title">{e(s['name'])}</h3><p class="service-tagline">{e(s['tagline'])}</p>
+<p class="service-summary">{e(s['summary'])}</p>
+<ul class="service-points">{points}</ul>
+<a class="service-link" href="{service_path(L, sid)}">{e(ui['more'])}<span class="sr-only">: {e(s['name'])}</span>{ICON['arrow']}</a></article>""")
 
     sectors = "".join(
         f'<article class="sector reveal">{sector_icon(s["title"])}<h3>{e(s["title"])}</h3><p>{e(s["text"])}</p><p class="tags">{e(s["tags"])}</p></article>'
@@ -411,21 +435,23 @@ def page_home(L):
         people.append(f"""<article class="person reveal" id="{p['id']}">
 <div class="portrait"><img src="/assets/{p['image']}-960.webp" srcset="/assets/{p['image']}-480.webp 480w, /assets/{p['image']}-960.webp 960w" sizes="(max-width: 48rem) 100vw, 40vw" width="960" height="{p['image_h']}" alt="{e(t['alt'])}" loading="lazy" decoding="async"></div>
 <div class="person-body"><h3>{e(p['name'])}</h3><p class="role">{e(t['role'])}</p><p>{e(t['bio'])}</p><p class="tags">{e(t['tags'])}</p>
-<div class="person-links"><a href="mailto:{p['email']}" aria-label="{e(ui['email_to'])} {e(p['name'])}">{ICON['mail']}<span>{p['email']}</span></a><a href="{p['linkedin']}" target="_blank" rel="noopener noreferrer" aria-label="{e(p['name'])} {e(ui['on_linkedin'])}">{ICON['linkedin']}<span>LinkedIn</span></a></div></div>
+<div class="person-links"><a href="#contact-{p['id']}">{ICON['phone']}<span>{e(ui['contact'])}</span></a><a href="{p['linkedin']}" target="_blank" rel="noopener noreferrer">{ICON['linkedin']}<span>LinkedIn</span><span class="sr-only">: {e(p['name'])}</span></a></div></div>
 </article>""")
+    avatars = "".join(
+        f'<img src="/assets/{p["image"]}-160.webp" width="160" height="160" alt="" decoding="async">' for p in SITE["people"]
+    )
+    names = " &amp; ".join(e(p["name"]) for p in SITE["people"])
 
     body = f"""<main id="main">
 <section class="hero" id="top" aria-labelledby="hero-title">
 <img class="hero-image" src="/assets/hero-1672.webp" srcset="/assets/hero-640.webp 640w, /assets/hero-1080.webp 1080w, /assets/hero-1672.webp 1672w" sizes="100vw" width="1672" height="941" alt="" fetchpriority="high" decoding="async">
 <div class="hero-shade" aria-hidden="true"></div>
 <div class="wrap hero-content">
-<p class="eyebrow hero-eyebrow"><span class="dot" aria-hidden="true"></span>{e(H['eyebrow'])}</p>
-<h1 id="hero-title">{e(H['h1_a'])}<br><span>{e(H['h1_b'])}</span></h1>
+<h1 id="hero-title"><span class="eyebrow hero-eyebrow"><span class="dot" aria-hidden="true"></span>{e(H['h1_kicker'])}</span><span class="h1-main">{e(H['h1_a'])}<br><span>{e(H['h1_b'])}</span></span></h1>
 <p class="hero-intro">{e(H['intro'])}</p>
 <div class="hero-actions"><a class="button button-light" href="#contact">{e(H['cta_primary'])}{ICON['arrow']}</a><a class="button button-outline" href="#services">{e(H['cta_secondary'])}{ICON['down']}</a></div>
-<p class="hero-location">{ICON['pin']}{e(ui['location_line'])}</p>
+<a class="hero-people" href="#contact"><span class="avatars">{avatars}</span><span><strong>{names}</strong><span>{e(ui['your_contacts'])}<span class="reach"> · {e(ui['reach_directly'])}</span></span></span>{ICON['arrow']}</a>
 </div>
-<nav class="wrap hero-index" aria-label="{e(ui['services'])}">{service_index}</nav>
 </section>
 
 <section class="section audience-section" aria-labelledby="audience-title"><div class="wrap">
@@ -433,9 +459,14 @@ def page_home(L):
 <div class="audiences">{audiences}</div>
 </div></section>
 
-<section class="section services-section" id="services" aria-labelledby="services-title"><div class="wrap">
+<section class="section alt services-section" id="services" aria-labelledby="services-title"><div class="wrap">
 {section_head(H['services_eyebrow'], H['services_title'], H['services_lead'], 'services-title')}
 <div class="services">{''.join(services)}</div>
+</div></section>
+
+<section class="section about-section" id="about" aria-labelledby="about-title"><div class="wrap">
+{section_head(H['about_eyebrow'], H['about_title'], H['about_lead'], 'about-title')}
+<div class="people">{''.join(people)}</div>
 </div></section>
 
 <section class="section dark sectors-section" id="sectors" aria-labelledby="sectors-title"><div class="wrap">
@@ -449,23 +480,18 @@ def page_home(L):
 <div class="principles">{principles}</div>
 </div></section>
 
-<section class="section alt about-section" id="about" aria-labelledby="about-title"><div class="wrap">
-{section_head(H['about_eyebrow'], H['about_title'], H['about_lead'], 'about-title')}
-<div class="people">{''.join(people)}</div>
-</div></section>
-
-<section class="section faq-section" id="faq" aria-labelledby="faq-title"><div class="wrap split">
+<section class="section alt faq-section" id="faq" aria-labelledby="faq-title"><div class="wrap split">
 {section_head(H['faq_eyebrow'], H['faq_title'], None, 'faq-title', 'sticky')}
 {disclosures(H['faq'], 'faq')}
 </div></section>
 
 <section class="cta-band" id="contact" aria-labelledby="contact-title"><div class="wrap">
 <div class="cta-inner reveal"><div><p class="eyebrow">{e(H['contact_eyebrow'])}</p><h2 id="contact-title">{e(H['contact_title'])}</h2><p class="lead">{e(H['contact_lead'])}</p>
-<p class="cta-address">{ICON['pin']}<span>{e(SITE['street'])}, {SITE['postal_code']} {e(SITE['city'][L['lang']])}, {e(SITE['country'][L['lang']])}</span></p></div>
+{contact_address(L)}</div>
 <div class="contact-cards">{contact_cards(L)}</div></div>
 </div></section>
 </main>
-"""
+{quick_contact(L)}"""
     return path, head(L, path=path, alt_path=alt, title=H["title"], description=H["description"], graph=graph, preload_hero=True) + header(L, alt_path=alt, home=True) + body + footer(L)
 
 
@@ -543,7 +569,7 @@ def page_service(L, sid):
 <div class="other-services">{others}</div>
 </div></section>
 {cta_band(L)}</main>
-"""
+{quick_contact(L)}"""
     return path, head(L, path=path, alt_path=alt, title=s["title"], description=s["description"], graph=graph) + header(L, alt_path=alt, home=False) + body + footer(L)
 
 
@@ -651,6 +677,8 @@ def llms_txt():
         "- Services: " + ", ".join(en["services"][sid]["name"] for sid in SERVICE_IDS),
         "- Sectors: " + ", ".join(s["title"] for s in en["sectors"]),
         f"- Website: {D}/",
+        "- Contact cards (vCard): " + ", ".join(f"{D}/vcard/{p['id']}.vcf" for p in SITE["people"]),
+        "- Not to be confused with other companies named GL Ventures outside Austria.",
         "",
         "## Pages (English)",
         f"- [Home]({D}/en/): overview, sectors, partners, FAQ, contact",
@@ -738,6 +766,42 @@ def manifest():
     }, indent=2) + "\n"
 
 
+def vcard(p):
+    """vCard 3.0 (best iOS/Android support), CRLF line endings, folded at 75 octets."""
+    def esc(v):
+        return str(v).replace("\\", "\\\\").replace(",", "\\,").replace(";", "\\;")
+
+    t = EN["people"][p["id"]]
+    lines = [
+        "BEGIN:VCARD",
+        "VERSION:3.0",
+        f"N:{esc(p['family'])};{esc(p['given'])};;;",
+        f"FN:{esc(p['name'])}",
+        f"ORG:{esc(SITE['legal_name'])}",
+        f"TITLE:{esc(t['role'])}",
+        f"TEL;TYPE=CELL,VOICE:{p['phone']}",
+        f"EMAIL;TYPE=INTERNET,WORK:{p['email']}",
+        f"ADR;TYPE=WORK:;;{esc(SITE['street'])};{esc(SITE['city']['de'])};;{SITE['postal_code']};{esc(SITE['country']['de'])}",
+        f"URL:{D}/",
+        f"X-SOCIALPROFILE;TYPE=linkedin:{p['linkedin']}",
+    ]
+    photo = STATIC / "assets" / f"{p['image']}-vcard.jpg"
+    if photo.exists():
+        lines.append("PHOTO;ENCODING=b;TYPE=JPEG:" + base64.b64encode(photo.read_bytes()).decode())
+    lines += [f"REV:{TODAY}", "END:VCARD"]
+
+    def fold(line):
+        parts, chunk = [], ""
+        for ch in line:
+            if len((chunk + ch).encode("utf-8")) > (74 if parts else 75):
+                parts.append(chunk)
+                chunk = ""
+            chunk += ch
+        return "\r\n ".join(parts + [chunk])
+
+    return "\r\n".join(fold(x) for x in lines) + "\r\n"
+
+
 # ---------------------------------------------------------------- build
 
 def write(path, text):
@@ -762,6 +826,9 @@ def main():
         indexed += [(service_path(L, sid), service_path(o, sid)) for sid in SERVICE_IDS]
         indexed += [(L["paths"]["imprint"], o["paths"]["imprint"]), (L["paths"]["privacy"], o["paths"]["privacy"])]
     write(*page_404())
+    for p in SITE["people"]:
+        (OUT / "vcard").mkdir(exist_ok=True)
+        (OUT / "vcard" / f"{p['id']}.vcf").write_bytes(vcard(p).encode("utf-8"))
 
     write("/sitemap.xml", sitemap(indexed))
     write("/robots.txt", ROBOTS)

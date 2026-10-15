@@ -20,10 +20,18 @@ document.addEventListener('click', event => {
 });
 window.matchMedia('(min-width: 64.0625rem)').addEventListener('change', event => { if (event.matches) setMenu(false); });
 
-/* Solid header once the page is scrolled. */
+/* Solid header once the page is scrolled; mobile quick contact after the hero,
+   hidden while the contact section itself is on screen. */
+const quick = document.querySelector('.quick-contact');
+const contact = document.getElementById('contact');
 let ticking = false;
 function onScroll() {
   header.classList.toggle('scrolled', window.scrollY > 24);
+  if (quick) {
+    const pastHero = window.scrollY > window.innerHeight * 0.6;
+    const atContact = contact && contact.getBoundingClientRect().top < window.innerHeight * 0.85;
+    quick.classList.toggle('show', pastHero && !atContact);
+  }
   ticking = false;
 }
 window.addEventListener('scroll', () => {

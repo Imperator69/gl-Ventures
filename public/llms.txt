@@ -9,6 +9,8 @@
 - Services: Complex Services, Strategic Advisory, Venture Building
 - Sectors: Defense, Energy, Innovation, Blockchain, Digitalisation
 - Website: https://www.gl-ventures.at/
+- Contact cards (vCard): https://www.gl-ventures.at/vcard/dominik-lerch.vcf, https://www.gl-ventures.at/vcard/gianluca-graf.vcf
+- Not to be confused with other companies named GL Ventures outside Austria.
 
 ## Pages (English)
 - [Home](https://www.gl-ventures.at/en/): overview, sectors, partners, FAQ, contact

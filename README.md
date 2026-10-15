@@ -18,7 +18,7 @@ Deployment (World4You): Inhalt von `public/` (inkl. `.htaccess`) per FTP/SFTP in
 | `src/content.py` | Alle Texte DE/EN, Firmendaten, Kontakte, Impressumsangaben |
 | `src/static/` | `styles.css`, `main.js`, Schrift (Inter, selbst gehostet), Bilder, `.htaccess`, Icons |
 | `build.py` | Templates, Schema.org-Daten, `sitemap.xml`, `robots.txt`, `llms.txt`, `llms-full.txt`, Manifest |
-| `tools/make_images.py` | Erzeugt Social-Vorschaubild und Icons neu (Pillow) |
+| `tools/make_images.py` | Erzeugt Social-Vorschaubilder (DE/EN), Icons, Avatare und vCard-Fotos neu (Pillow) |
 | `public/` | Generierte Website (wird mitcommittet) |
 
 ## Seiten
@@ -27,6 +27,13 @@ Deployment (World4You): Inhalt von `public/` (inkl. `.htaccess`) per FTP/SFTP in
 - `/leistungen/{complex-services,strategic-advisory,venture-building}/` und `/en/services/...`: Leistungsseiten
 - `/impressum/`, `/datenschutz/`, `/en/legal-notice/`, `/en/privacy/`
 - `/404.html`
+- `/vcard/dominik-lerch.vcf`, `/vcard/gianluca-graf.vcf`: Kontakt speichern (mit Foto)
+
+## Für Besucher über die Visitenkarte
+
+- Hero zeigt beide Partner mit Foto, ein Tipp führt direkt zu den Kontaktkarten
+- Kontaktkarten: Anrufen, E-Mail, Kontakt speichern (vCard), LinkedIn, große Tippflächen
+- Mobil erscheint nach dem Hero eine Leiste mit beiden Partnern (springt zur jeweiligen Kontaktkarte)
 
 ## SEO / KI-Suche
 

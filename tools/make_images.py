@@ -34,7 +34,7 @@ def icon(size):
     return img.resize((size, size), Image.LANCZOS)
 
 
-def og_image():
+def og_image(name, line_a, line_b, place):
     W, H = 1200, 630
     hero = Image.open(STATIC / "assets" / "hero-1672.webp").convert("RGB")
     ratio = max(W / hero.width, H / hero.height)
@@ -51,18 +51,32 @@ def og_image():
     d.rounded_rectangle([m, 78, m + 62, 140], radius=12, outline="white", width=3)
     d.text((m + 31, 110), "GL", font=font("InterDisplay-Bold.otf", 28), fill="white", anchor="mm")
     d.text((m + 84, 110), "V E N T U R E S", font=font("InterDisplay-SemiBold.otf", 26), fill="white", anchor="lm")
-    d.text((m, 270), "Komplexe Vorhaben.", font=font("InterDisplay-SemiBold.otf", 76), fill="white", anchor="ls")
-    d.text((m, 360), "Klare Umsetzung.", font=font("InterDisplay-SemiBold.otf", 76), fill=(166, 179, 198), anchor="ls")
+    d.text((m, 270), line_a, font=font("InterDisplay-SemiBold.otf", 76), fill="white", anchor="ls")
+    d.text((m, 360), line_b, font=font("InterDisplay-SemiBold.otf", 76), fill=(166, 179, 198), anchor="ls")
     d.text((m, 470), "Complex Services · Strategic Advisory · Venture Building", font=font("InterDisplay-Medium.otf", 28), fill=BRASS, anchor="ls")
-    d.text((m, 540), "Wien · Vienna, Austria · gl-ventures.at", font=font("InterDisplay-Regular.otf", 24), fill=(200, 208, 220), anchor="ls")
-    img.save(STATIC / "assets" / "og-image.jpg", quality=86, optimize=True, progressive=True)
+    d.text((m, 540), place, font=font("InterDisplay-Regular.otf", 24), fill=(200, 208, 220), anchor="ls")
+    img.save(STATIC / "assets" / name, quality=86, optimize=True, progressive=True)
+
+
+def vcard_photo(person):
+    """Small square portrait embedded in the downloadable vCard."""
+    src = Image.open(STATIC / "assets" / f"{person}-960.webp").convert("RGB")
+    side = src.width
+    top = round(src.height * 0.04)
+    crop = src.crop((0, top, side, top + side)).resize((240, 240), Image.LANCZOS)
+    crop.save(STATIC / "assets" / f"{person}-vcard.jpg", quality=78, optimize=True)
+    # Square avatar for hero, contact cards and the mobile quick-contact bar.
+    src.crop((0, top, side, top + side)).resize((160, 160), Image.LANCZOS).save(STATIC / "assets" / f"{person}-160.webp", quality=82)
 
 
 def main():
     icon(180).save(STATIC / "apple-touch-icon.png", optimize=True)
     icon(512).save(STATIC / "assets" / "logo-512.png", optimize=True)
     icon(48).save(STATIC / "favicon.ico", sizes=[(16, 16), (32, 32), (48, 48)])
-    og_image()
+    og_image("og-image.jpg", "Komplexe Vorhaben.", "Klare Umsetzung.", "Wien, Österreich · gl-ventures.at")
+    og_image("og-image-en.jpg", "Complex challenges.", "Clear execution.", "Vienna, Austria · gl-ventures.at")
+    for person in ("dominik", "gianluca"):
+        vcard_photo(person)
     print("Images written to src/static")
 
 
