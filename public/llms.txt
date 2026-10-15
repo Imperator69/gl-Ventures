@@ -1,0 +1,28 @@
+# GL Ventures
+
+> GL Ventures GmbH is a boutique advisory based in Vienna, Austria, offering Complex Services, Strategic Advisory and Venture Building to businesses, investors and public stakeholders. Sectors: defense, energy, innovation, blockchain, digitalisation. Languages: German, English.
+
+## Key facts
+- Legal name: GL Ventures GmbH
+- Address: Wollzeile 18/10, 1010 Vienna, Austria
+- Partners: Dominik Lerch (Managing Partner · Strategy & Venture Building, lerch@gl-ventures.at, +43 664 621 4729); Gianluca Graf (Managing Partner · Ventures & Operations, graf@gl-ventures.at, +43 660 646 3329)
+- Services: Complex Services, Strategic Advisory, Venture Building
+- Sectors: Defense, Energy, Innovation, Blockchain, Digitalisation
+- Website: https://www.gl-ventures.at/
+
+## Pages (English)
+- [Home](https://www.gl-ventures.at/en/): overview, sectors, partners, FAQ, contact
+- [Complex Services](https://www.gl-ventures.at/en/services/complex-services/): Making ambitious projects work.
+- [Strategic Advisory](https://www.gl-ventures.at/en/services/strategic-advisory/): Clarity for your next business decision.
+- [Venture Building](https://www.gl-ventures.at/en/services/venture-building/): From a business idea to a viable company.
+
+## Seiten (Deutsch)
+- [Startseite](https://www.gl-ventures.at/): Überblick, Kompetenzfelder, Partner, FAQ, Kontakt
+- [Complex Services](https://www.gl-ventures.at/leistungen/complex-services/): Wir machen anspruchsvolle Vorhaben umsetzbar.
+- [Strategic Advisory](https://www.gl-ventures.at/leistungen/strategic-advisory/): Klarheit für die nächste unternehmerische Entscheidung.
+- [Venture Building](https://www.gl-ventures.at/leistungen/venture-building/): Von der Geschäftsidee zum tragfähigen Unternehmen.
+
+## Optional
+- [Full text for LLMs](https://www.gl-ventures.at/llms-full.txt)
+- [Impressum](https://www.gl-ventures.at/impressum/)
+- [Datenschutz](https://www.gl-ventures.at/datenschutz/)
