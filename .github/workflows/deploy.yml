@@ -1,5 +1,5 @@
 # Builds the site and uploads ./public to World4You via FTPS.
-# Runs on every push to main and manually via "Run workflow".
+# Runs on every push to main/Main and manually via "Run workflow".
 #
 # Repository settings > Secrets and variables > Actions:
 #   Secrets:   FTP_SERVER, FTP_USERNAME, FTP_PASSWORD   (from the World4You customer area)
@@ -9,7 +9,7 @@ name: Deploy to World4You
 
 on:
   push:
-    branches: [main]
+    branches: [main, Main]
   workflow_dispatch:
 
 concurrency:
@@ -23,9 +23,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
 

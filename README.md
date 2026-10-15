@@ -11,7 +11,7 @@ python3 -m http.server -d public 8000  # http://localhost:8000
 
 ## Deployment (GitHub Actions → World4You)
 
-`.github/workflows/deploy.yml` baut die Seite und lädt `public/` per FTPS hoch, bei jedem Push auf `main` oder manuell über *Actions → Deploy to World4You → Run workflow*. Hochgeladen werden nur geänderte Dateien.
+`.github/workflows/deploy.yml` baut die Seite und lädt `public/` per FTPS hoch, bei jedem Push auf `main`/`Main` oder manuell über *Actions → Deploy to World4You → Run workflow*. Hochgeladen werden nur geänderte Dateien.
 
 Einmalig einrichten unter *Settings → Secrets and variables → Actions*:
 
