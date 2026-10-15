@@ -1,0 +1,43 @@
+# Builds the site and uploads ./public to World4You via FTPS.
+# Runs on every push to main and manually via "Run workflow".
+#
+# Repository settings > Secrets and variables > Actions:
+#   Secrets:   FTP_SERVER, FTP_USERNAME, FTP_PASSWORD   (from the World4You customer area)
+#   Variables: FTP_SERVER_DIR  (optional, default "./"; must end with "/")
+#              FTP_PROTOCOL    (optional, default "ftps"; "ftp" only if the host offers no TLS)
+name: Deploy to World4You
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Build site
+        run: python3 build.py
+
+      - name: Upload to World4You
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ${{ vars.FTP_PROTOCOL || 'ftps' }}
+          local-dir: ./public/
+          server-dir: ${{ vars.FTP_SERVER_DIR || './' }}

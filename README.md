@@ -9,7 +9,23 @@ python3 build.py                       # erzeugt ./public
 python3 -m http.server -d public 8000  # http://localhost:8000
 ```
 
-Deployment (World4You): Inhalt von `public/` (inkl. `.htaccess`) per FTP/SFTP ins Webroot laden.
+## Deployment (GitHub Actions → World4You)
+
+`.github/workflows/deploy.yml` baut die Seite und lädt `public/` per FTPS hoch, bei jedem Push auf `main` oder manuell über *Actions → Deploy to World4You → Run workflow*. Hochgeladen werden nur geänderte Dateien.
+
+Einmalig einrichten unter *Settings → Secrets and variables → Actions*:
+
+| Typ | Name | Wert |
+|---|---|---|
+| Secret | `FTP_SERVER` | FTP-Server aus dem World4You-Kundenbereich |
+| Secret | `FTP_USERNAME` | FTP-Benutzer |
+| Secret | `FTP_PASSWORD` | FTP-Passwort |
+| Variable (optional) | `FTP_SERVER_DIR` | Zielordner, Standard `./`, muss mit `/` enden |
+| Variable (optional) | `FTP_PROTOCOL` | Standard `ftps`; `ftp` nur, wenn der Server kein TLS anbietet |
+
+Zugangsdaten nie in Dateien im Repository speichern: Das Repository ist öffentlich.
+
+Manuell geht es weiterhin: Inhalt von `public/` (inkl. `.htaccess`) per FTP ins Webroot laden.
 
 ## Wo was liegt
 

@@ -16,6 +16,13 @@ ErrorDocument 404 /404.html
   RewriteRule ^en/index\.html$ /en/ [L,R=301]
 </IfModule>
 
+# Sync state written by the GitHub deploy action; not for the public
+<Files ".ftp-deploy-sync-state.json">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+</Files>
+
 <IfModule mod_headers.c>
   Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
   Header always set X-Content-Type-Options "nosniff"
