@@ -10,6 +10,7 @@ import base64
 import datetime
 import hashlib
 import json
+import re
 import shutil
 from html import escape
 from pathlib import Path
@@ -26,6 +27,15 @@ ORG_ID = f"{D}/#organization"
 
 def e(s):
     return escape(str(s), quote=True)
+
+
+def rich(s):
+    """Escape a headline and turn *marked* phrases into the italic accent."""
+    return re.sub(r"\*(.+?)\*", r"<em>\1</em>", e(s))
+
+
+def plain(s):
+    return s.replace("*", "")
 
 
 def asset_version(name):
@@ -123,8 +133,6 @@ def org_ld(L):
         },
         "sameAs": [],
     }
-    if SITE["vat_id"]:
-        org["vatID"] = SITE["vat_id"]
     return org
 
 
@@ -252,7 +260,7 @@ def head(L, *, path, alt_path, title, description, graph, robots="index,follow,m
 <meta name="robots" content="{robots}">
 <meta name="author" content="{e(SITE['legal_name'])}">
 <meta name="format-detection" content="telephone=no">
-<meta name="theme-color" content="#09111d">
+<meta name="theme-color" content="#0a111c">
 <meta name="geo.region" content="AT-9"><meta name="geo.placename" content="{e(SITE['city'][L['lang']])}"><meta name="geo.position" content="{SITE['geo']['lat']};{SITE['geo']['lng']}"><meta name="ICBM" content="{SITE['geo']['lat']}, {SITE['geo']['lng']}">
 <link rel="canonical" href="{url}">{alternates}
 <meta property="og:type" content="website"><meta property="og:site_name" content="{e(SITE['name'])}"><meta property="og:locale" content="{L['locale']}"><meta property="og:locale:alternate" content="{og_alt}">
@@ -261,7 +269,7 @@ def head(L, *, path, alt_path, title, description, graph, robots="index,follow,m
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="{e(title)}"><meta name="twitter:description" content="{e(description)}"><meta name="twitter:image" content="{og_img}">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <link rel="alternate" type="text/markdown" title="LLM summary" href="/llms.txt">
-<link rel="preload" href="/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>{hero}
+<link rel="preload" href="/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/fonts/instrument-serif-latin-400-italic.woff2" as="font" type="font/woff2" crossorigin>{hero}
 <link rel="stylesheet" href="/styles.css?v={css_v}">
 <script src="/main.js?v={js_v}" defer></script>
 {jsonld(graph)}
@@ -292,7 +300,7 @@ def header(L, *, alt_path, home, plain=False):
 <nav class="nav" id="main-nav" aria-label="{e(ui['nav_label'])}">{nav}<a class="nav-link nav-cta" href="{base}#contact">{e(ui['contact'])}{ICON['arrow']}</a></nav>
 <div class="header-tools"><div class="lang-switch">{switch}</div>
 <button class="menu-toggle" type="button" aria-controls="main-nav" aria-expanded="false" aria-label="{e(ui['menu_open'])}" data-open-label="{e(ui['menu_open'])}" data-close-label="{e(ui['menu_close'])}"><span></span></button></div>
-</div></header>
+</div><div class="scroll-progress" aria-hidden="true"></div></header>
 """
 
 
@@ -315,7 +323,7 @@ def footer(L):
 </div>
 <div class="footer-bottom"><span>© {year} {e(SITE['legal_name'])}. {e(ui['rights'])}</span>
 <nav aria-label="{e(ui['legal_nav'])}"><a href="{L['paths']['imprint']}">{e(ui['imprint'])}</a><a href="{L['paths']['privacy']}">{e(ui['privacy'])}</a><a href="/sitemap.xml">Sitemap</a></nav></div>
-</div></footer>
+</div><p class="footer-wordmark" aria-hidden="true">GL <em>Ventures</em></p></footer>
 </body>
 </html>
 """
@@ -323,7 +331,7 @@ def footer(L):
 
 def section_head(eyebrow, title, lead=None, hid=None, cls=""):
     lead_html = f'<p class="lead">{e(lead)}</p>' if lead else ""
-    return f'<div class="section-head {cls} reveal"><div><p class="eyebrow">{e(eyebrow)}</p><h2 id="{hid}">{e(title)}</h2></div>{lead_html}</div>'
+    return f'<div class="section-head {cls} reveal"><div><p class="eyebrow">{e(eyebrow)}</p><h2 id="{hid}">{rich(title)}</h2></div>{lead_html}</div>'
 
 
 def disclosures(items, group, numbered=False):
@@ -371,13 +379,21 @@ def quick_contact(L):
     return f'<nav class="quick-contact" aria-label="{e(L["ui"]["quick_contact"])}">{links}</nav>\n'
 
 
-def cta_band(L):
+def cta_band(L, title=None, lead=None):
     ui = L["ui"]
-    return f"""<section class="cta-band" id="contact" aria-labelledby="cta-title"><div class="wrap">
-<div class="cta-inner reveal"><div><p class="eyebrow">{e(ui['contact'])}</p><h2 id="cta-title">{e(ui['cta_title'])}</h2><p class="lead">{e(ui['cta_text'])}</p>{contact_address(L)}</div>
-<div class="contact-cards">{contact_cards(L)}</div></div>
+    return f"""<section class="cta-band" id="contact" aria-labelledby="contact-title"><div class="wrap">
+<div class="cta-head reveal"><div><p class="eyebrow">{e(ui['contact'])}</p><h2 id="contact-title">{rich(title or ui['cta_title'])}</h2></div>
+<div><p class="lead">{e(lead or ui['cta_text'])}</p>{contact_address(L)}</div></div>
+<div class="contact-cards reveal">{contact_cards(L)}</div>
 </div></section>
 """
+
+
+def hero_media(priority=False):
+    prio = ' fetchpriority="high"' if priority else ""
+    return ('<div class="hero-media" aria-hidden="true"><img class="hero-image" src="/assets/hero-1672.webp" '
+            'srcset="/assets/hero-640.webp 640w, /assets/hero-1080.webp 1080w, /assets/hero-1672.webp 1672w" sizes="100vw" '
+            f'width="1672" height="941" alt=""{prio} decoding="async"><div class="hero-shade"></div></div>')
 
 
 # ---------------------------------------------------------------- pages
@@ -403,26 +419,28 @@ def page_home(L):
     ]
 
     audiences = "".join(
-        f'<article class="audience reveal"><h3>{e(a["title"])}</h3><p>{e(a["text"])}</p></article>'
-        for a in H["audiences"]
+        f'<li class="audience reveal"><span class="num">{i + 1:02d}</span><h3>{e(a["title"])}</h3><p>{e(a["text"])}</p></li>'
+        for i, a in enumerate(H["audiences"])
     )
 
-    services = []
+    services, services_nav = [], []
     for i, sid in enumerate(SERVICE_IDS):
         s = L["services"][sid]
-        points = "".join(f'<li>{ICON["check"]}<span>{e(m["title"])}</span></li>' for m in s["modules"])
+        points = "".join(f'<li><span class="num">{j + 1:02d}</span>{e(m["title"])}</li>' for j, m in enumerate(s["modules"]))
+        services_nav.append(f'<li><a href="#{sid}"><span class="num">{i + 1:02d}</span><span>{e(s["name"])}</span></a></li>')
         services.append(f"""<article class="service reveal" id="{sid}" aria-labelledby="{sid}-title">
-<p class="eyebrow">{i + 1:02d} / {e(s['kicker'])}</p><h3 id="{sid}-title">{e(s['name'])}</h3><p class="service-tagline">{e(s['tagline'])}</p>
+<span class="service-numeral" aria-hidden="true">{i + 1:02d}</span>
+<p class="eyebrow">{e(s['kicker'])}</p><h3 id="{sid}-title">{e(s['name'])}</h3><p class="service-tagline">{e(s['tagline'])}</p>
 <p class="service-summary">{e(s['summary'])}</p>
 <ul class="service-points">{points}</ul>
-<a class="service-link" href="{service_path(L, sid)}">{e(ui['more'])}<span class="sr-only">: {e(s['name'])}</span>{ICON['arrow']}</a></article>""")
+<a class="button button-light" href="{service_path(L, sid)}">{e(ui['more'])}<span class="sr-only">: {e(s['name'])}</span>{ICON['arrow']}</a></article>""")
 
     sectors = "".join(
-        f'<article class="sector reveal">{sector_icon(s["title"])}<h3>{e(s["title"])}</h3><p>{e(s["text"])}</p><p class="tags">{e(s["tags"])}</p></article>'
+        f'<li class="sector reveal">{sector_icon(s["title"])}<h3>{e(s["title"])}</h3><p>{e(s["text"])}</p><p class="tags">{e(s["tags"])}</p></li>'
         for s in L["sectors"]
     )
     steps = "".join(
-        f'<li class="reveal"><span class="step-num">{i + 1:02d}</span><h3>{e(s["title"])}</h3><p>{e(s["text"])}</p></li>'
+        f'<li class="reveal"><span class="step-num" aria-hidden="true">{i + 1:02d}</span><h3>{e(s["title"])}</h3><p>{e(s["text"])}</p></li>'
         for i, s in enumerate(H["approach_steps"])
     )
     principles = "".join(
@@ -433,45 +451,50 @@ def page_home(L):
     for p in SITE["people"]:
         t = L["people"][p["id"]]
         people.append(f"""<article class="person reveal" id="{p['id']}">
-<div class="portrait"><img src="/assets/{p['image']}-960.webp" srcset="/assets/{p['image']}-480.webp 480w, /assets/{p['image']}-960.webp 960w" sizes="(max-width: 48rem) 100vw, 40vw" width="960" height="{p['image_h']}" alt="{e(t['alt'])}" loading="lazy" decoding="async"></div>
-<div class="person-body"><h3>{e(p['name'])}</h3><p class="role">{e(t['role'])}</p><p>{e(t['bio'])}</p><p class="tags">{e(t['tags'])}</p>
+<div class="portrait" data-drift><img src="/assets/{p['image']}-960.webp" srcset="/assets/{p['image']}-480.webp 480w, /assets/{p['image']}-960.webp 960w" sizes="(max-width: 48rem) 100vw, 45vw" width="960" height="{p['image_h']}" alt="{e(t['alt'])}" loading="lazy" decoding="async"></div>
+<div class="person-body"><p class="role">{e(t['role'])}</p><h3>{e(p['name'])}</h3><p>{e(t['bio'])}</p><p class="tags">{e(t['tags'])}</p>
 <div class="person-links"><a href="#contact-{p['id']}">{ICON['phone']}<span>{e(ui['contact'])}</span></a><a href="{p['linkedin']}" target="_blank" rel="noopener noreferrer">{ICON['linkedin']}<span>LinkedIn</span><span class="sr-only">: {e(p['name'])}</span></a></div></div>
 </article>""")
     avatars = "".join(
         f'<img src="/assets/{p["image"]}-160.webp" width="160" height="160" alt="" decoding="async">' for p in SITE["people"]
     )
     names = " &amp; ".join(e(p["name"]) for p in SITE["people"])
+    words = [s["title"] for s in L["sectors"]] + [L["services"][sid]["name"] for sid in SERVICE_IDS]
+    group = '<div class="marquee-group">' + "".join(f"<span>{e(w)}</span><i></i>" for w in words * 2) + "</div>"
 
     body = f"""<main id="main">
 <section class="hero" id="top" aria-labelledby="hero-title">
-<img class="hero-image" src="/assets/hero-1672.webp" srcset="/assets/hero-640.webp 640w, /assets/hero-1080.webp 1080w, /assets/hero-1672.webp 1672w" sizes="100vw" width="1672" height="941" alt="" fetchpriority="high" decoding="async">
-<div class="hero-shade" aria-hidden="true"></div>
+{hero_media(priority=True)}
 <div class="wrap hero-content">
-<h1 id="hero-title"><span class="eyebrow hero-eyebrow"><span class="dot" aria-hidden="true"></span>{e(H['h1_kicker'])}</span><span class="h1-main">{e(H['h1_a'])}<br><span>{e(H['h1_b'])}</span></span></h1>
-<p class="hero-intro">{e(H['intro'])}</p>
-<div class="hero-actions"><a class="button button-light" href="#contact">{e(H['cta_primary'])}{ICON['arrow']}</a><a class="button button-outline" href="#services">{e(H['cta_secondary'])}{ICON['down']}</a></div>
-<a class="hero-people" href="#contact"><span class="avatars">{avatars}</span><span><strong>{names}</strong><span>{e(ui['your_contacts'])}<span class="reach"> · {e(ui['reach_directly'])}</span></span></span>{ICON['arrow']}</a>
+<h1 id="hero-title"><span class="hero-kicker"><span class="dot" aria-hidden="true"></span>{e(H['h1_kicker'])}</span><span class="h1-main"><span class="line"><span>{e(H['h1_a'])}</span></span> <span class="line"><span><em>{e(H['h1_b'])}</em></span></span></span></h1>
+<div class="hero-row"><p class="hero-intro">{e(H['intro'])}</p>
+<div class="hero-actions"><a class="button button-light" href="#contact">{e(H['cta_primary'])}{ICON['arrow']}</a><a class="button button-outline" href="#services">{e(H['cta_secondary'])}{ICON['down']}</a></div></div>
+<div class="hero-bottom"><a class="hero-people" href="#contact"><span class="avatars">{avatars}</span><span><strong>{names}</strong><span>{e(ui['your_contacts'])}<span class="reach"> · {e(ui['reach_directly'])}</span></span></span>{ICON['arrow']}</a>
+<p class="hero-location">{ICON['pin']}{e(ui['location_line'])}</p>
+<a class="scroll-hint" href="#audience"><span>{e(ui['scroll'])}</span><span class="scroll-line" aria-hidden="true"></span></a></div>
 </div>
 </section>
+<div class="marquee" aria-hidden="true"><div class="marquee-track">{group}{group}</div></div>
 
-<section class="section audience-section" aria-labelledby="audience-title"><div class="wrap">
+<section class="section audience-section" id="audience" aria-labelledby="audience-title"><div class="wrap">
 {section_head(H['audience_eyebrow'], H['audience_title'], H['audience_lead'], 'audience-title')}
-<div class="audiences">{audiences}</div>
+<ol class="audiences">{audiences}</ol>
 </div></section>
 
-<section class="section alt services-section" id="services" aria-labelledby="services-title"><div class="wrap">
-{section_head(H['services_eyebrow'], H['services_title'], H['services_lead'], 'services-title')}
-<div class="services">{''.join(services)}</div>
-</div></section>
+<section class="services-section" id="services" aria-labelledby="services-title"><div class="services-pin"><div class="wrap services-layout">
+<div class="services-aside"><p class="eyebrow">{e(H['services_eyebrow'])}</p><h2 id="services-title">{rich(H['services_title'])}</h2><p class="lead">{e(H['services_lead'])}</p>
+<ol class="services-nav">{''.join(services_nav)}</ol><div class="services-progress" aria-hidden="true"><span></span></div></div>
+<div class="services-stage">{''.join(services)}</div>
+</div></div></section>
 
 <section class="section about-section" id="about" aria-labelledby="about-title"><div class="wrap">
 {section_head(H['about_eyebrow'], H['about_title'], H['about_lead'], 'about-title')}
 <div class="people">{''.join(people)}</div>
 </div></section>
 
-<section class="section dark sectors-section" id="sectors" aria-labelledby="sectors-title"><div class="wrap">
+<section class="section alt sectors-section" id="sectors" aria-labelledby="sectors-title"><div class="wrap">
 {section_head(H['sectors_eyebrow'], H['sectors_title'], H['sectors_lead'], 'sectors-title')}
-<div class="sectors">{sectors}</div>
+<ul class="sectors">{sectors}</ul>
 </div></section>
 
 <section class="section approach-section" id="approach" aria-labelledby="approach-title"><div class="wrap">
@@ -484,13 +507,7 @@ def page_home(L):
 {section_head(H['faq_eyebrow'], H['faq_title'], None, 'faq-title', 'sticky')}
 {disclosures(H['faq'], 'faq')}
 </div></section>
-
-<section class="cta-band" id="contact" aria-labelledby="contact-title"><div class="wrap">
-<div class="cta-inner reveal"><div><p class="eyebrow">{e(H['contact_eyebrow'])}</p><h2 id="contact-title">{e(H['contact_title'])}</h2><p class="lead">{e(H['contact_lead'])}</p>
-{contact_address(L)}</div>
-<div class="contact-cards">{contact_cards(L)}</div></div>
-</div></section>
-</main>
+{cta_band(L, H['contact_title'], H['contact_lead'])}</main>
 {quick_contact(L)}"""
     return path, head(L, path=path, alt_path=alt, title=H["title"], description=H["description"], graph=graph, preload_hero=True) + header(L, alt_path=alt, home=True) + body + footer(L)
 
@@ -533,8 +550,7 @@ def page_service(L, sid):
     )
     body = f"""<main id="main">
 <section class="page-hero" aria-labelledby="page-title">
-<img class="hero-image" src="/assets/hero-1672.webp" srcset="/assets/hero-640.webp 640w, /assets/hero-1080.webp 1080w, /assets/hero-1672.webp 1672w" sizes="100vw" width="1672" height="941" alt="" decoding="async">
-<div class="hero-shade" aria-hidden="true"></div>
+{hero_media()}
 <div class="wrap page-hero-content">
 {breadcrumbs_html(L, crumbs)}
 <p class="eyebrow">{idx + 1:02d} / {e(s['kicker'])}</p>
@@ -560,12 +576,12 @@ def page_service(L, sid):
 </div></section>
 
 <section class="section alt" aria-labelledby="sfaq-title"><div class="wrap split">
-{section_head(ui['faq'], f"{ui['service_faq']} {s['name']}", None, 'sfaq-title', 'sticky')}
+{section_head(ui['faq'], f"{ui['service_faq']} *{s['name']}*", None, 'sfaq-title', 'sticky')}
 {disclosures(s['faq'], 'sfaq')}
 </div></section>
 
 <section class="section" aria-labelledby="others-title"><div class="wrap">
-<div class="section-head reveal"><div><h2 id="others-title">{e(ui['other_services'])}</h2></div></div>
+<div class="section-head reveal"><div><h2 id="others-title">{rich(ui['other_services'])}</h2></div></div>
 <div class="other-services">{others}</div>
 </div></section>
 {cta_band(L)}</main>
@@ -588,48 +604,27 @@ def legal_shell(L, *, key, path, alt, title, description, h1, inner):
     return path, head(L, path=path, alt_path=alt, title=title, description=description, graph=graph) + header(L, alt_path=alt, home=False, plain=True) + body + footer(L)
 
 
-MISSING = []
-
-
-def val(L, v, label):
-    v = v[L["lang"]] if isinstance(v, dict) else v
-    if v:
-        return e(v)
-    MISSING.append(label)
-    return f'<span class="missing">[{e(L["imprint"]["missing"])}]</span>'
-
-
 def page_imprint(L):
     I = L["imprint"]
     lb = I["labels"]
-    city = SITE["city"][L["lang"]]
+    op = SITE["operator"]
     rows = [
-        (lb["company"], e(SITE["legal_name"])),
-        (lb["form"], e(lb["form_value"])),
-        (lb["seat"], e(city)),
-        (lb["address"], f"{e(SITE['street'])}, {SITE['postal_code']} {e(city)}, {e(SITE['country'][L['lang']])}"),
-        (lb["register_no"], val(L, SITE["company_register_no"], "Firmenbuchnummer")),
-        (lb["register_court"], val(L, SITE["company_register_court"], "Firmenbuchgericht")),
-        (lb["vat"], val(L, SITE["vat_id"], "UID-Nummer")),
-        (lb["directors"], val(L, SITE["managing_directors"], "Geschäftsführung")),
-        (lb["licence"], val(L, SITE["trade_licence"], "Gewerbe")),
-        (lb["authority"], val(L, SITE["trade_authority"], "Gewerbebehörde")),
-        (lb["chamber"], val(L, SITE["chamber"], "Kammer")),
-        (lb["law"], e(lb["law_value"])),
+        (lb["operator"], e(op)),
+        (lb["address"], address_line(L)),
         (lb["contact"], "<br>".join(f'{e(p["name"])}: <a href="mailto:{p["email"]}">{p["email"]}</a>, <a href="tel:{p["phone"]}">{p["phone_display"]}</a>' for p in SITE["people"])),
     ]
-    dl = "".join(f"<dt>{k}</dt><dd>{v}</dd>" for k, v in rows)
+    dl = "".join(f"<dt>{e(k)}</dt><dd>{v}</dd>" for k, v in rows)
     inner = f"""<p class="lead">{e(I['intro'])}</p>
 <dl class="facts">{dl}</dl>
-<h2>{e(I['media_title'])}</h2><p>{e(I['media_text'])}</p>
+<h2>{e(I['media_title'])}</h2><p>{e(I['media_text'].format(operator=op))}</p>
 <h2>{e(I['liability_title'])}</h2><p>{e(I['liability_text'])}</p>
 <h2>{e(I['copyright_title'])}</h2><p>{e(I['copyright_text'])}</p>"""
-    return legal_shell(L, key="imprint", path=L["paths"]["imprint"], alt=other(L)["paths"]["imprint"], title=I["title"], description=I["description"], h1=I["h1"], inner=inner)
+    return legal_shell(L, key="imprint", path=L["paths"]["imprint"], alt=other(L)["paths"]["imprint"], title=I["title"], description=I["description"].format(operator=op), h1=I["h1"], inner=inner)
 
 
 def page_privacy(L):
     P = L["privacy"]
-    secs = "".join(f"<h2>{e(s['h'])}</h2>" + "".join(f"<p>{e(p)}</p>" for p in s["p"]) for s in P["sections"])
+    secs = "".join(f"<h2>{e(s['h'])}</h2>" + "".join(f"<p>{e(p.format(operator=SITE['operator']))}</p>" for p in s["p"]) for s in P["sections"])
     inner = secs + f'<p class="meta">{e(P["updated"])}: {TODAY}</p>'
     return legal_shell(L, key="privacy", path=L["paths"]["privacy"], alt=other(L)["paths"]["privacy"], title=P["title"], description=P["description"], h1=P["h1"], inner=inner)
 
@@ -701,7 +696,7 @@ def llms_full_txt():
     out = []
     for L in LANGS:
         H = L["home"]
-        out += [f"# {SITE['name']} ({L['lang'].upper()})", "", H["intro"], "", f"## {H['audience_title']}", H["audience_lead"]]
+        out += [f"# {SITE['name']} ({L['lang'].upper()})", "", H["intro"], "", f"## {plain(H['audience_title'])}", H["audience_lead"]]
         out += [f"- {a['title']}: {a['text']}" for a in H["audiences"]]
         for sid in SERVICE_IDS:
             s = L["services"][sid]
@@ -710,10 +705,10 @@ def llms_full_txt():
             out += [""] + [f"- {x}" for x in s["starting_points"]]
             out += [""] + [f"- {o['title']}: {o['text']}" for o in s["outcomes"]]
             out += [""] + [f"Q: {f['q']}\nA: {f['a']}" for f in s["faq"]]
-        out += ["", f"## {H['sectors_title']}"] + [f"- {s['title']}: {s['text']}" for s in L["sectors"]]
-        out += ["", f"## {H['approach_title']}"] + [f"{i + 1}. {s['title']}: {s['text']}" for i, s in enumerate(H["approach_steps"])]
+        out += ["", f"## {plain(H['sectors_title'])}"] + [f"- {s['title']}: {s['text']}" for s in L["sectors"]]
+        out += ["", f"## {plain(H['approach_title'])}"] + [f"{i + 1}. {s['title']}: {s['text']}" for i, s in enumerate(H["approach_steps"])]
         out += [f"- {p['title']}: {p['text']}" for p in H["principles"]]
-        out += ["", f"## {H['about_title']}", H["about_lead"]]
+        out += ["", f"## {plain(H['about_title'])}", H["about_lead"]]
         out += [f"- {p['name']}, {L['people'][p['id']]['role']}: {L['people'][p['id']]['bio']} ({p['email']}, {p['phone_display']}, {p['linkedin']})" for p in SITE["people"]]
         out += ["", f"## FAQ"] + [f"Q: {f['q']}\nA: {f['a']}\n" for f in H["faq"]]
         out += [f"## {L['ui']['contact']}", f"{SITE['legal_name']}, {SITE['street']}, {SITE['postal_code']} {SITE['city'][L['lang']]}, {SITE['country'][L['lang']]}", "", "---", ""]
@@ -837,9 +832,6 @@ def main():
     write("/site.webmanifest", manifest())
 
     print(f"Built {len(indexed) + 1} pages into {OUT.relative_to(ROOT)}/")
-    missing = sorted(set(MISSING))
-    if missing:
-        print("Impressum incomplete, fill in src/content.py SITE:", ", ".join(missing))
 
 
 if __name__ == "__main__":
