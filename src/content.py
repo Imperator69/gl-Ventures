@@ -8,7 +8,6 @@ structurally identical so pages, structured data and llms.txt stay in sync.
 SITE = {
     "domain": "https://www.gl-ventures.at",
     "name": "GL Ventures",
-    "legal_name": "GL Ventures GmbH",
     "street": "Wollzeile 18/10",
     "postal_code": "1010",
     "city": {"de": "Wien", "en": "Vienna"},
@@ -140,7 +139,7 @@ DE = {
         ],
         "about_eyebrow": "Die Partner",
         "about_title": "Persönliche *Verantwortung.*",
-        "about_lead": "GL Ventures GmbH ist eine Boutique Advisory aus Wien. Dominik Lerch und Gianluca Graf verbinden Unternehmertum und internationale Venture-, Energie- und Technologieerfahrung mit persönlichem Engagement in der Umsetzung.",
+        "about_lead": "GL Ventures ist eine Boutique Advisory aus Wien. Dominik Lerch und Gianluca Graf verbinden Unternehmertum und internationale Venture-, Energie- und Technologieerfahrung mit persönlichem Engagement in der Umsetzung.",
         "faq_eyebrow": "Fragen & Antworten",
         "faq_title": "GL Ventures *auf einen Blick.*",
         "faq": [
@@ -394,7 +393,7 @@ EN = {
         ],
         "about_eyebrow": "The partners",
         "about_title": "Personal *commitment.*",
-        "about_lead": "GL Ventures GmbH is a boutique advisory based in Vienna. Dominik Lerch and Gianluca Graf combine entrepreneurship and international experience in ventures, energy and technology with personal commitment to delivery.",
+        "about_lead": "GL Ventures is a boutique advisory based in Vienna. Dominik Lerch and Gianluca Graf combine entrepreneurship and international experience in ventures, energy and technology with personal commitment to delivery.",
         "faq_eyebrow": "Questions & answers",
         "faq_title": "GL Ventures *at a glance.*",
         "faq": [

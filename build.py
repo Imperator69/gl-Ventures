@@ -97,8 +97,7 @@ def org_ld(L):
         "@type": ["Organization", "ProfessionalService"],
         "@id": ORG_ID,
         "name": SITE["name"],
-        "legalName": SITE["legal_name"],
-        "alternateName": [SITE["legal_name"], f"{SITE['name']} {SITE['city'][L['lang']]}"],
+        "alternateName": f"{SITE['name']} {SITE['city'][L['lang']]}",
         "url": f"{D}/",
         "description": L["home"]["description"],
         "slogan": L["ui"]["tagline"],
@@ -220,7 +219,6 @@ def website_ld():
         "@id": f"{D}/#website",
         "url": f"{D}/",
         "name": SITE["name"],
-        "alternateName": SITE["legal_name"],
         "inLanguage": ["de", "en"],
         "publisher": {"@id": ORG_ID},
     }
@@ -258,7 +256,7 @@ def head(L, *, path, alt_path, title, description, graph, robots="index,follow,m
 <title>{e(title)}</title>
 <meta name="description" content="{e(description)}">
 <meta name="robots" content="{robots}">
-<meta name="author" content="{e(SITE['legal_name'])}">
+<meta name="author" content="{e(SITE['name'])}">
 <meta name="format-detection" content="telephone=no">
 <meta name="theme-color" content="#0a111c">
 <meta name="geo.region" content="AT-9"><meta name="geo.placename" content="{e(SITE['city'][L['lang']])}"><meta name="geo.position" content="{SITE['geo']['lat']};{SITE['geo']['lng']}"><meta name="ICBM" content="{SITE['geo']['lat']}, {SITE['geo']['lng']}">
@@ -319,9 +317,9 @@ def footer(L):
 <div class="footer-brand"><a class="brand" href="{L['paths']['home']}"><span class="brand-mark">GL</span> <span class="brand-word">Ventures</span></a><p>{e(ui['tagline'])}</p></div>
 <div><p class="footer-title">{e(ui['services'])}</p><ul>{services}</ul></div>
 <div><p class="footer-title">{e(ui['contact'])}</p><ul>{people}</ul></div>
-<div><p class="footer-title">{e(ui['location'])}</p><address>{e(SITE['legal_name'])}<br>{e(SITE['street'])}<br>{SITE['postal_code']} {e(SITE['city'][L['lang']])}, {e(SITE['country'][L['lang']])}</address></div>
+<div><p class="footer-title">{e(ui['location'])}</p><address>{e(SITE['name'])}<br>{e(SITE['street'])}<br>{SITE['postal_code']} {e(SITE['city'][L['lang']])}, {e(SITE['country'][L['lang']])}</address></div>
 </div>
-<div class="footer-bottom"><span>© {year} {e(SITE['legal_name'])}. {e(ui['rights'])}</span>
+<div class="footer-bottom"><span>© {year} {e(SITE['name'])}. {e(ui['rights'])}</span>
 <nav aria-label="{e(ui['legal_nav'])}"><a href="{L['paths']['imprint']}">{e(ui['imprint'])}</a><a href="{L['paths']['privacy']}">{e(ui['privacy'])}</a><a href="/sitemap.xml">Sitemap</a></nav></div>
 </div><p class="footer-wordmark" aria-hidden="true">GL <em>Ventures</em></p></footer>
 </body>
@@ -663,10 +661,10 @@ def llms_txt():
     lines = [
         f"# {SITE['name']}",
         "",
-        f"> {SITE['legal_name']} is a boutique advisory based in Vienna, Austria, offering Complex Services, Strategic Advisory and Venture Building to businesses, investors and public stakeholders. Sectors: defense, energy, innovation, blockchain, digitalisation. Languages: German, English.",
+        f"> {SITE['name']} is a boutique advisory based in Vienna, Austria, offering Complex Services, Strategic Advisory and Venture Building to businesses, investors and public stakeholders. Sectors: defense, energy, innovation, blockchain, digitalisation. Languages: German, English.",
         "",
         "## Key facts",
-        f"- Legal name: {SITE['legal_name']}",
+        f"- Website operator (legal notice): {SITE['operator']}",
         f"- Address: {SITE['street']}, {SITE['postal_code']} Vienna, Austria",
         "- Partners: " + "; ".join(f"{p['name']} ({en['people'][p['id']]['role']}, {p['email']}, {p['phone_display']})" for p in SITE["people"]),
         "- Services: " + ", ".join(en["services"][sid]["name"] for sid in SERVICE_IDS),
@@ -711,7 +709,7 @@ def llms_full_txt():
         out += ["", f"## {plain(H['about_title'])}", H["about_lead"]]
         out += [f"- {p['name']}, {L['people'][p['id']]['role']}: {L['people'][p['id']]['bio']} ({p['email']}, {p['phone_display']}, {p['linkedin']})" for p in SITE["people"]]
         out += ["", f"## FAQ"] + [f"Q: {f['q']}\nA: {f['a']}\n" for f in H["faq"]]
-        out += [f"## {L['ui']['contact']}", f"{SITE['legal_name']}, {SITE['street']}, {SITE['postal_code']} {SITE['city'][L['lang']]}, {SITE['country'][L['lang']]}", "", "---", ""]
+        out += [f"## {L['ui']['contact']}", f"{SITE['name']}, {SITE['street']}, {SITE['postal_code']} {SITE['city'][L['lang']]}, {SITE['country'][L['lang']]}", "", "---", ""]
     return "\n".join(out)
 
 
@@ -772,7 +770,7 @@ def vcard(p):
         "VERSION:3.0",
         f"N:{esc(p['family'])};{esc(p['given'])};;;",
         f"FN:{esc(p['name'])}",
-        f"ORG:{esc(SITE['legal_name'])}",
+        f"ORG:{esc(SITE['name'])}",
         f"TITLE:{esc(t['role'])}",
         f"TEL;TYPE=CELL,VOICE:{p['phone']}",
         f"EMAIL;TYPE=INTERNET,WORK:{p['email']}",
