@@ -31,8 +31,8 @@ Manuell geht es weiterhin: Inhalt von `public/` (inkl. `.htaccess`) per FTP ins 
 
 | Pfad | Inhalt |
 |---|---|
-| `src/content.py` | Alle Texte DE/EN, Firmendaten, Kontakte, Impressumsangaben |
-| `src/static/` | `styles.css`, `main.js`, Schrift (Inter, selbst gehostet), Bilder, `.htaccess`, Icons |
+| `src/content.py` | Alle Texte DE/EN, Firmendaten, Kontakte, Betreiber lt. Impressum (`SITE["operator"]`). In Überschriften markieren `*Sternchen*` den kursiven Akzent |
+| `src/static/` | `styles.css`, `main.js`, Schriften (Inter, Instrument Serif; selbst gehostet), Bilder, `.htaccess`, Icons |
 | `build.py` | Templates, Schema.org-Daten, `sitemap.xml`, `robots.txt`, `llms.txt`, `llms-full.txt`, Manifest |
 | `tools/make_images.py` | Erzeugt Social-Vorschaubilder (DE/EN), Icons, Avatare und vCard-Fotos neu (Pillow) |
 | `public/` | Generierte Website (wird mitcommittet) |
@@ -45,9 +45,16 @@ Manuell geht es weiterhin: Inhalt von `public/` (inkl. `.htaccess`) per FTP ins 
 - `/404.html`
 - `/vcard/dominik-lerch.vcf`, `/vcard/gianluca-graf.vcf`: Kontakt speichern (mit Foto)
 
+## Design und Scroll-Effekte
+
+- Dunkler Einstieg, helle Inhaltsbereiche; Inter für Text, Instrument Serif kursiv als Akzent in Überschriften
+- Leistungen: Auf großen Bildschirmen bleibt der Bereich stehen und die drei Leistungen wechseln beim Scrollen. Am Handy, ohne JavaScript und bei „Bewegung reduzieren“ sind es normale Karten untereinander
+- Einstiegsbild mit Tiefenwirkung, Überschrift fährt zeilenweise ein, Laufband, Fortschrittslinie im Kopf, gestaffeltes Einblenden
+- Keine Inline-Styles im HTML (die Content-Security-Policy in `.htaccess` erlaubt nur eigene Dateien)
+
 ## Für Besucher über die Visitenkarte
 
-- Hero zeigt beide Partner mit Foto, ein Tipp führt direkt zu den Kontaktkarten
+- Einstieg zeigt beide Partner mit Foto, ein Tipp führt direkt zu den Kontaktkarten
 - Kontaktkarten: Anrufen, E-Mail, Kontakt speichern (vCard), LinkedIn, große Tippflächen
 - Mobil erscheint nach dem Hero eine Leiste mit beiden Partnern (springt zur jeweiligen Kontaktkarte)
 
@@ -61,6 +68,6 @@ Manuell geht es weiterhin: Inhalt von `public/` (inkl. `.htaccess`) per FTP ins 
 
 ## Offen
 
-- Impressum: Firmenbuchnummer, UID, Geschäftsführung, Gewerbe in `src/content.py` (`SITE`) eintragen. `build.py` meldet fehlende Angaben.
+- Impressum: derzeit GG Beratung mit Anschrift und Kontakt. Firmenbuchnummer, UID, Rechtsform und Gewerbe ergänzen, sobald feststeht, wer die Seite dauerhaft betreibt.
 - Datenschutz: Auftragsverarbeitungsvertrag mit World4You bestätigen.
 - Nach Go-live: Google Search Console und Bing Webmaster Tools verifizieren, Sitemap einreichen; Google-Unternehmensprofil anlegen und unter `sameAs` in `build.py` verlinken.
