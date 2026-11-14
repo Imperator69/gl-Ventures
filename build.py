@@ -10,6 +10,7 @@ import base64
 import datetime
 import hashlib
 import json
+import os
 import re
 import shutil
 from html import escape
@@ -72,6 +73,17 @@ def og_image_name(L):
     return "og-image.jpg" if L["lang"] == "de" else "og-image-en.jpg"
 
 
+# Values from src/content.py; an environment variable of the same name in capitals overrides (used for local tests).
+TRACKING = {key: os.environ.get(key.upper(), value) for key, value in SITE["tracking"].items()}
+TAG_ID = TRACKING["google_tag_id"].strip()
+if TAG_ID and not re.fullmatch(r"(G|GT|AW)-[A-Z0-9-]+", TAG_ID):
+    raise SystemExit(f"google_tag_id {TAG_ID!r}: expected a Google tag ID such as G-AB12CD34EF (GTM containers are not supported)")
+
+
+def person_path(L, pid):
+    return L["paths"]["person"].format(id=pid)
+
+
 def service_path(L, sid):
     return L["paths"]["service"].format(id=sid)
 
@@ -122,7 +134,7 @@ def org_ld(L):
             }
             for p in SITE["people"]
         ],
-        "member": [{"@id": f"{D}/#{p['id']}"} for p in SITE["people"]],
+        "employee": [{"@id": f"{D}/#{p['id']}"} for p in SITE["people"]],
         "hasOfferCatalog": {
             "@type": "OfferCatalog",
             "name": f"{SITE['name']} Services",
@@ -147,6 +159,10 @@ def person_ld(L, p):
         "email": p["email"],
         "telephone": p["phone"],
         "worksFor": {"@id": ORG_ID},
+        "workLocation": {"@type": "Place", "address": address_ld(L)},
+        "knowsAbout": [x.strip() for x in t["tags"].split("·")],
+        "knowsLanguage": ["de", "en"],
+        "url": f"{D}{person_path(L, p['id'])}",
         "sameAs": [p["linkedin"]],
     }
 
@@ -164,6 +180,7 @@ def service_ld(L, sid):
         "provider": {"@id": ORG_ID},
         "areaServed": "International",
         "availableLanguage": ["de", "en"],
+        "audience": [{"@type": "BusinessAudience", "name": a["title"]} for a in L["home"]["audiences"]],
         "hasOfferCatalog": {
             "@type": "OfferCatalog",
             "name": s["name"],
@@ -232,6 +249,15 @@ def jsonld(graph):
 
 # ---------------------------------------------------------------- layout
 
+def verification_meta():
+    out = ""
+    if TRACKING["google_site_verification"]:
+        out += f'\n<meta name="google-site-verification" content="{e(TRACKING["google_site_verification"])}">'
+    if TRACKING["bing_site_verification"]:
+        out += f'\n<meta name="msvalidate.01" content="{e(TRACKING["bing_site_verification"])}">'
+    return out
+
+
 def head(L, *, path, alt_path, title, description, graph, robots="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1", preload_hero=False):
     url = f"{D}{path}"
     de_path, en_path = (path, alt_path) if L["lang"] == "de" else (alt_path, path)
@@ -249,7 +275,7 @@ def head(L, *, path, alt_path, title, description, graph, robots="index,follow,m
     og_alt = "en_GB" if L["lang"] == "de" else "de_AT"
     og_img = f"{D}/assets/{og_image_name(L)}"
     return f"""<!doctype html>
-<html lang="{L['lang']}">
+<html lang="{L['lang']}"{f' data-gtag="{e(TAG_ID)}"' if TAG_ID else ''}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -257,7 +283,7 @@ def head(L, *, path, alt_path, title, description, graph, robots="index,follow,m
 <meta name="description" content="{e(description)}">
 <meta name="robots" content="{robots}">
 <meta name="author" content="{e(SITE['name'])}">
-<meta name="format-detection" content="telephone=no">
+<meta name="format-detection" content="telephone=no">{verification_meta()}
 <meta name="theme-color" content="#0a111c">
 <meta name="geo.region" content="AT-9"><meta name="geo.placename" content="{e(SITE['city'][L['lang']])}"><meta name="geo.position" content="{SITE['geo']['lat']};{SITE['geo']['lng']}"><meta name="ICBM" content="{SITE['geo']['lat']}, {SITE['geo']['lng']}">
 <link rel="canonical" href="{url}">{alternates}
@@ -309,9 +335,18 @@ def footer(L):
         f'<li><a href="{service_path(L, sid)}">{e(L["services"][sid]["name"])}</a></li>' for sid in SERVICE_IDS
     )
     people = "".join(
-        f'<li class="footer-person"><span>{e(p["name"])}</span><a href="tel:{p["phone"]}">{p["phone_display"]}</a><a href="mailto:{p["email"]}">{p["email"]}</a></li>'
+f'<li class="footer-person"><a class="footer-name" href="{person_path(L, p["id"])}">{e(p["name"])}</a><a href="tel:{p["phone"]}">{p["phone_display"]}</a><a href="mailto:{p["email"]}">{p["email"]}</a></li>'
         for p in SITE["people"]
     )
+    settings = consent = ""
+    if TAG_ID:
+        # Google Analytics loads only after "accept"; both buttons carry equal weight.
+        settings = f'<button type="button" class="footer-button" data-consent-open>{e(ui["consent_settings"])}</button>'
+        consent = f"""
+<div class="consent" id="consent" role="dialog" aria-label="{e(ui['consent_label'])}" hidden>
+<p>{e(ui['consent_text'])} <a href="{L['paths']['privacy']}">{e(ui['consent_more'])}</a></p>
+<div class="consent-actions"><button type="button" data-consent="denied">{e(ui['consent_decline'])}</button><button type="button" data-consent="granted">{e(ui['consent_accept'])}</button></div>
+</div>"""
     return f"""<footer class="site-footer"><div class="wrap">
 <div class="footer-grid">
 <div class="footer-brand"><a class="brand" href="{L['paths']['home']}"><span class="brand-mark">GL</span> <span class="brand-word">Ventures</span></a><p>{e(ui['tagline'])}</p></div>
@@ -320,15 +355,15 @@ def footer(L):
 <div><p class="footer-title">{e(ui['location'])}</p><address>{e(SITE['name'])}<br>{e(SITE['street'])}<br>{SITE['postal_code']} {e(SITE['city'][L['lang']])}, {e(SITE['country'][L['lang']])}</address></div>
 </div>
 <div class="footer-bottom"><span>© {year} {e(SITE['name'])}. {e(ui['rights'])}</span>
-<nav aria-label="{e(ui['legal_nav'])}"><a href="{L['paths']['imprint']}">{e(ui['imprint'])}</a><a href="{L['paths']['privacy']}">{e(ui['privacy'])}</a><a href="/sitemap.xml">Sitemap</a></nav></div>
-</div><p class="footer-wordmark" aria-hidden="true">GL <em>Ventures</em></p></footer>
+<nav aria-label="{e(ui['legal_nav'])}"><a href="{L['paths']['imprint']}">{e(ui['imprint'])}</a><a href="{L['paths']['privacy']}">{e(ui['privacy'])}</a>{settings}<a href="/sitemap.xml">Sitemap</a></nav></div>
+</div><p class="footer-wordmark" aria-hidden="true">GL <em>Ventures</em></p></footer>{consent}
 </body>
 </html>
 """
 
 
-def section_head(eyebrow, title, lead=None, hid=None, cls=""):
-    lead_html = f'<p class="lead">{e(lead)}</p>' if lead else ""
+def section_head(eyebrow, title, lead=None, hid=None, cls="", extra=""):
+    lead_html = (f'<p class="lead">{e(lead)}</p>' if lead else "") + extra
     return f'<div class="section-head {cls} reveal"><div><p class="eyebrow">{e(eyebrow)}</p><h2 id="{hid}">{rich(title)}</h2></div>{lead_html}</div>'
 
 
@@ -337,7 +372,7 @@ def disclosures(items, group, numbered=False):
     for i, f in enumerate(items):
         num = f'<span class="num">{i + 1:02d}</span>' if numbered else ""
         out.append(
-            f'<details class="disclosure" name="{group}"><summary>{num}<span class="q">{e(f["q"])}</span><span class="plus" aria-hidden="true"></span></summary>'
+            f'<details class="disclosure" name="{group}"{" open" if i == 0 else ""}><summary>{num}<span class="q">{e(f["q"])}</span><span class="plus" aria-hidden="true"></span></summary>'
             f'<div class="disclosure-body"><p>{e(f["a"])}</p></div></details>'
         )
     return f'<div class="disclosures">{"".join(out)}</div>'
@@ -357,6 +392,10 @@ def contact_cards(L):
 <a class="action" href="{p['linkedin']}" target="_blank" rel="noopener noreferrer">{ICON['linkedin']}<span>LinkedIn</span><span class="sr-only">: {e(p['name'])}</span></a>
 </div></article>""")
     return "".join(cards)
+
+
+def plain_address(L):
+    return f"{SITE['street']}, {SITE['postal_code']} {SITE['city'][L['lang']]}, {SITE['country'][L['lang']]}"
 
 
 def address_line(L):
@@ -403,7 +442,10 @@ def page_home(L):
     graph = [
         org_ld(L),
         website_ld(),
-        webpage_ld(L, url, H["title"], H["description"], {"mainEntity": {"@id": f"{url}#services"}}),
+        webpage_ld(L, url, H["title"], H["description"], {
+            "mainEntity": {"@id": f"{url}#services"},
+            "speakable": {"@type": "SpeakableSpecification", "cssSelector": [".hero-intro", ".facts-compact"]},
+        }),
         {
             "@type": "ItemList",
             "@id": f"{url}#services",
@@ -450,9 +492,19 @@ def page_home(L):
         t = L["people"][p["id"]]
         people.append(f"""<article class="person reveal" id="{p['id']}">
 <div class="portrait" data-drift><img src="/assets/{p['image']}-960.webp" srcset="/assets/{p['image']}-480.webp 480w, /assets/{p['image']}-960.webp 960w" sizes="(max-width: 48rem) 100vw, 45vw" width="960" height="{p['image_h']}" alt="{e(t['alt'])}" loading="lazy" decoding="async"></div>
-<div class="person-body"><p class="role">{e(t['role'])}</p><h3>{e(p['name'])}</h3><p>{e(t['bio'])}</p><p class="tags">{e(t['tags'])}</p>
-<div class="person-links"><a href="#contact-{p['id']}">{ICON['phone']}<span>{e(ui['contact'])}</span></a><a href="{p['linkedin']}" target="_blank" rel="noopener noreferrer">{ICON['linkedin']}<span>LinkedIn</span><span class="sr-only">: {e(p['name'])}</span></a></div></div>
+<div class="person-body"><p class="role">{e(t['role'])}</p><h3><a href="{person_path(L, p['id'])}">{e(p['name'])}</a></h3><p>{e(t['bio'])}</p><p class="tags">{e(t['tags'])}</p>
+<div class="person-links"><a href="{person_path(L, p['id'])}">{ICON['arrow']}<span>{e(ui['profile'])}</span><span class="sr-only">: {e(p['name'])}</span></a><a href="#contact-{p['id']}">{ICON['phone']}<span>{e(ui['contact'])}</span></a><a href="{p['linkedin']}" target="_blank" rel="noopener noreferrer">{ICON['linkedin']}<span>LinkedIn</span><span class="sr-only">: {e(p['name'])}</span></a></div></div>
 </article>""")
+    # Key facts in plain sight: the short answers search and answer engines look for.
+    fact_rows = [
+        (ui["fact_services"], ", ".join(L["services"][sid]["name"] for sid in SERVICE_IDS)),
+        (ui["fact_for"], ", ".join(a["title"] for a in H["audiences"])),
+        (ui["fact_sectors"], ", ".join(x["title"] for x in L["sectors"])),
+        (ui["fact_partners"], ", ".join(p["name"] for p in SITE["people"])),
+        (ui["location"], plain_address(L)),
+        (ui["fact_languages"], ui["languages_value"]),
+    ]
+    facts = '<dl class="facts-compact">' + "".join(f"<dt>{e(k)}</dt><dd>{e(v)}</dd>" for k, v in fact_rows) + "</dl>"
     avatars = "".join(
         f'<img src="/assets/{p["image"]}-160.webp" width="160" height="160" alt="" decoding="async">' for p in SITE["people"]
     )
@@ -502,7 +554,7 @@ def page_home(L):
 </div></section>
 
 <section class="section alt faq-section" id="faq" aria-labelledby="faq-title"><div class="wrap split">
-{section_head(H['faq_eyebrow'], H['faq_title'], None, 'faq-title', 'sticky')}
+{section_head(H['faq_eyebrow'], H['faq_title'], None, 'faq-title', 'sticky', extra=facts)}
 {disclosures(H['faq'], 'faq')}
 </div></section>
 {cta_band(L, H['contact_title'], H['contact_lead'])}</main>
@@ -587,6 +639,58 @@ def page_service(L, sid):
     return path, head(L, path=path, alt_path=alt, title=s["title"], description=s["description"], graph=graph) + header(L, alt_path=alt, home=False) + body + footer(L)
 
 
+def page_person(L, p):
+    ui, t = L["ui"], L["people"][p["id"]]
+    path, alt = person_path(L, p["id"]), person_path(other(L), p["id"])
+    url = f"{D}{path}"
+    crumbs = [(ui["home"], L["paths"]["home"]), (ui["team"], f"{L['paths']['home']}#about"), (p["name"], path)]
+    graph = [
+        org_ld(L),
+        website_ld(),
+        {**webpage_ld(L, url, t["title"], t["description"], {"mainEntity": {"@id": f"{D}/#{p['id']}"}, "breadcrumb": {"@id": f"{url}#breadcrumb"}}), "@type": "ProfilePage"},
+        person_ld(L, p),
+        breadcrumb_ld(url, crumbs),
+    ]
+    rows = [
+        (ui["fact_role"], e(t["role"])),
+        (ui["fact_company"], f'<a href="{L["paths"]["home"]}">{e(SITE["name"])}</a>, {e(SITE["city"][L["lang"]])}'),
+        (ui["fact_focus"], e(t["tags"])),
+        (ui["fact_languages"], e(ui["languages_value"])),
+        (ui["contact"], f'<a href="mailto:{p["email"]}">{p["email"]}</a><br><a href="tel:{p["phone"]}">{p["phone_display"]}</a>'),
+        ("LinkedIn", f'<a href="{p["linkedin"]}" target="_blank" rel="noopener noreferrer me">{e(p["linkedin"].split("//")[1].rstrip("/"))}</a>'),
+    ]
+    dl = "".join(f"<dt>{e(k)}</dt><dd>{v}</dd>" for k, v in rows)
+    others = "".join(
+        f'<a class="other-service reveal" href="{person_path(L, o["id"])}"><span class="num">{i + 1:02d}</span><span class="name">{e(o["name"])}</span><span class="tag">{e(L["people"][o["id"]]["role"])}</span>{ICON["arrow"]}</a>'
+        for i, o in enumerate(SITE["people"]) if o is not p
+    )
+    body = f"""<main id="main">
+<section class="page-hero" aria-labelledby="page-title">
+{hero_media()}
+<div class="wrap page-hero-content">
+{breadcrumbs_html(L, crumbs)}
+<p class="eyebrow">{e(t['role'])}</p>
+<h1 id="page-title">{e(p['name'])}</h1>
+<p class="page-tagline">{e(t['tags'])}</p>
+<div class="hero-actions"><a class="button button-light" href="#contact-{p['id']}">{e(ui['get_in_touch'])}{ICON['arrow']}</a><a class="button button-outline" href="/vcard/{p['id']}.vcf" download="{p['id']}.vcf">{e(ui['save_contact'])}{ICON['down']}</a></div>
+</div></section>
+
+<section class="section" aria-labelledby="profile-title"><div class="wrap profile">
+<div class="portrait reveal" data-drift><img src="/assets/{p['image']}-960.webp" srcset="/assets/{p['image']}-480.webp 480w, /assets/{p['image']}-960.webp 960w" sizes="(max-width: 56rem) 100vw, 40vw" width="960" height="{p['image_h']}" alt="{e(t['alt'])}" decoding="async"></div>
+<div class="reveal"><p class="eyebrow">{e(ui['profile_title'])}</p><h2 id="profile-title" class="sr-only">{e(ui['profile_title'])}: {e(p['name'])}</h2>
+<p class="profile-bio">{e(t['bio'])}</p>
+<dl class="facts">{dl}</dl></div>
+</div></section>
+
+<section class="section alt" aria-labelledby="others-title"><div class="wrap">
+<div class="section-head reveal"><div><h2 id="others-title">{rich(ui['other_partner'])}</h2></div></div>
+<div class="other-services">{others}</div>
+</div></section>
+{cta_band(L)}</main>
+{quick_contact(L)}"""
+    return path, head(L, path=path, alt_path=alt, title=t["title"], description=t["description"], graph=graph) + header(L, alt_path=alt, home=False) + body + footer(L)
+
+
 def legal_shell(L, *, key, path, alt, title, description, h1, inner):
     ui = L["ui"]
     url = f"{D}{path}"
@@ -622,7 +726,8 @@ def page_imprint(L):
 
 def page_privacy(L):
     P = L["privacy"]
-    secs = "".join(f"<h2>{e(s['h'])}</h2>" + "".join(f"<p>{e(p.format(operator=SITE['operator']))}</p>" for p in s["p"]) for s in P["sections"])
+    secs = "".join(f"<h2>{e(s['h'])}</h2>" + "".join(f"<p>{e(p.format(operator=SITE['operator']))}</p>" for p in s["p"])
+                   for s in P["sections"] if s.get("when") in (None, "tracking" if TAG_ID else "no_tracking"))
     inner = secs + f'<p class="meta">{e(P["updated"])}: {TODAY}</p>'
     return legal_shell(L, key="privacy", path=L["paths"]["privacy"], alt=other(L)["paths"]["privacy"], title=P["title"], description=P["description"], h1=P["h1"], inner=inner)
 
@@ -646,7 +751,7 @@ def sitemap(pages):
     rows = []
     for path, alt in pages:
         de_p, en_p = (path, alt) if not path.startswith("/en/") else (alt, path)
-        prio = "1.0" if path in ("/", "/en/") else ("0.8" if "/leistungen/" in path or "/services/" in path else "0.3")
+        prio = "1.0" if path in ("/", "/en/") else ("0.8" if "/leistungen/" in path or "/services/" in path else "0.6" if "/team/" in path else "0.3")
         rows.append(
             f"<url><loc>{D}{path}</loc><lastmod>{TODAY}</lastmod><priority>{prio}</priority>"
             f'<xhtml:link rel="alternate" hreflang="de" href="{D}{de_p}"/>'
@@ -673,13 +778,20 @@ def llms_txt():
         "- Contact cards (vCard): " + ", ".join(f"{D}/vcard/{p['id']}.vcf" for p in SITE["people"]),
         "- Not to be confused with other companies named GL Ventures outside Austria.",
         "",
+        f"- Last updated: {TODAY}",
+        "",
+        "## Short answers",
+        *[f"- {f['q']} {f['a']}" for f in en["home"]["faq"]],
+        "",
         "## Pages (English)",
         f"- [Home]({D}/en/): overview, sectors, partners, FAQ, contact",
         *[f"- [{en['services'][sid]['name']}]({D}{service_path(en, sid)}): {en['services'][sid]['tagline']}" for sid in SERVICE_IDS],
+        *[f"- [{p['name']}]({D}{person_path(en, p['id'])}): {en['people'][p['id']]['role']}" for p in SITE["people"]],
         "",
         "## Seiten (Deutsch)",
         f"- [Startseite]({D}/): Überblick, Kompetenzfelder, Partner, FAQ, Kontakt",
         *[f"- [{de['services'][sid]['name']}]({D}{service_path(de, sid)}): {de['services'][sid]['tagline']}" for sid in SERVICE_IDS],
+        *[f"- [{p['name']}]({D}{person_path(de, p['id'])}): {de['people'][p['id']]['role']}" for p in SITE["people"]],
         "",
         "## Optional",
         f"- [Full text for LLMs]({D}/llms-full.txt)",
@@ -813,15 +925,32 @@ def main():
     indexed = []
     for L in LANGS:
         o = other(L)
-        for path, html in [page_home(L), *[page_service(L, sid) for sid in SERVICE_IDS], page_imprint(L), page_privacy(L)]:
+        for path, html in [page_home(L), *[page_service(L, sid) for sid in SERVICE_IDS], *[page_person(L, p) for p in SITE["people"]], page_imprint(L), page_privacy(L)]:
             write(path, html)
         indexed += [(L["paths"]["home"], o["paths"]["home"])]
         indexed += [(service_path(L, sid), service_path(o, sid)) for sid in SERVICE_IDS]
+        indexed += [(person_path(L, p["id"]), person_path(o, p["id"])) for p in SITE["people"]]
         indexed += [(L["paths"]["imprint"], o["paths"]["imprint"]), (L["paths"]["privacy"], o["paths"]["privacy"])]
     write(*page_404())
     for p in SITE["people"]:
         (OUT / "vcard").mkdir(exist_ok=True)
         (OUT / "vcard" / f"{p['id']}.vcf").write_bytes(vcard(p).encode("utf-8"))
+
+    if TAG_ID:
+        # Allow Google Analytics in the Content-Security-Policy only when it is actually used.
+        htaccess = OUT / ".htaccess"
+        text = htaccess.read_text(encoding="utf-8")
+        for old, new in [
+            ("img-src 'self' data:;", "img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com;"),
+            ("script-src 'self';", "script-src 'self' https://www.googletagmanager.com;"),
+            ("connect-src 'self';", "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com;"),
+        ]:
+            if old not in text:
+                raise SystemExit(f"src/static/.htaccess: CSP directive {old!r} not found")
+            text = text.replace(old, new)
+        htaccess.write_text(text, encoding="utf-8")
+    if SITE["indexnow_key"]:
+        write(f"/{SITE['indexnow_key']}.txt", SITE["indexnow_key"])
 
     write("/sitemap.xml", sitemap(indexed))
     write("/robots.txt", ROBOTS)

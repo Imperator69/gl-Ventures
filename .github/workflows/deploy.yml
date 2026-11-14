@@ -41,3 +41,8 @@ jobs:
           protocol: ${{ vars.FTP_PROTOCOL || 'ftps' }}
           local-dir: ./public/
           server-dir: ${{ vars.FTP_SERVER_DIR || './' }}
+
+      # Tells Bing (and with it ChatGPT search and Copilot) that pages changed. Never blocks a deploy.
+      - name: Notify search engines (IndexNow)
+        continue-on-error: true
+        run: python3 tools/indexnow.py

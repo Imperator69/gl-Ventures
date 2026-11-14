@@ -12,17 +12,34 @@
 - Contact cards (vCard): https://www.gl-ventures.at/vcard/dominik-lerch.vcf, https://www.gl-ventures.at/vcard/gianluca-graf.vcf
 - Not to be confused with other companies named GL Ventures outside Austria.
 
+- Last updated: 2026-11-14
+
+## Short answers
+- What does GL Ventures do? GL Ventures provides Complex Services, Strategic Advisory and Venture Building. We support businesses, investors and public stakeholders with complex projects, strategic decisions and the development of new companies.
+- How do the three services differ? Complex Services focus on managing and delivering demanding projects. Strategic Advisory provides the basis for strategic decisions. Venture Building combines business model development with building a company. The services can be combined depending on the project.
+- Who does GL Ventures work with? Businesses, investors and public stakeholders. Typical clients are leadership teams and capital providers who need to structure a complex project, prepare a strategic decision or build a new company.
+- Which sectors does GL Ventures cover? Our areas of expertise are defense and dual use, energy and infrastructure, innovation and technology commercialisation, blockchain and tokenisation, and digitalisation.
+- Does GL Ventures also handle execution? Yes. We take responsibility for defined workstreams, coordinate external specialists and support project organisation, site development and permitting processes, and the preparation of management decisions.
+- Who is behind GL Ventures? GL Ventures is led by its Managing Partners Dominik Lerch (Strategy & Venture Building) and Gianluca Graf (Ventures & Operations). Both work on their clients’ projects personally.
+- What is the difference between strategic advisory and Venture Building? Strategic Advisory provides the basis for a decision: positioning, business case and roadmap. Venture Building goes further and helps build the company itself, from validating the business idea through partnership structure and funding preparation to market entry.
+- Where does GL Ventures work? GL Ventures is based at Wollzeile 18/10, 1010 Vienna, Austria. We also support international and cross-border projects and work in German and English.
+- How does an engagement start? Contact Dominik Lerch or Gianluca Graf by email or phone. In an initial conversation, we discuss your objective, constraints and support needs, then define an appropriate scope and next steps.
+
 ## Pages (English)
 - [Home](https://www.gl-ventures.at/en/): overview, sectors, partners, FAQ, contact
 - [Complex Services](https://www.gl-ventures.at/en/services/complex-services/): Making ambitious projects work.
 - [Strategic Advisory](https://www.gl-ventures.at/en/services/strategic-advisory/): Clarity for your next business decision.
 - [Venture Building](https://www.gl-ventures.at/en/services/venture-building/): From a business idea to a viable company.
+- [Dominik Lerch](https://www.gl-ventures.at/en/team/dominik-lerch/): Managing Partner · Strategy & Venture Building
+- [Gianluca Graf](https://www.gl-ventures.at/en/team/gianluca-graf/): Managing Partner · Ventures & Operations
 
 ## Seiten (Deutsch)
 - [Startseite](https://www.gl-ventures.at/): Überblick, Kompetenzfelder, Partner, FAQ, Kontakt
 - [Complex Services](https://www.gl-ventures.at/leistungen/complex-services/): Wir machen anspruchsvolle Vorhaben umsetzbar.
 - [Strategic Advisory](https://www.gl-ventures.at/leistungen/strategic-advisory/): Klarheit für die nächste unternehmerische Entscheidung.
 - [Venture Building](https://www.gl-ventures.at/leistungen/venture-building/): Von der Geschäftsidee zum tragfähigen Unternehmen.
+- [Dominik Lerch](https://www.gl-ventures.at/team/dominik-lerch/): Managing Partner · Strategy & Venture Building
+- [Gianluca Graf](https://www.gl-ventures.at/team/gianluca-graf/): Managing Partner · Ventures & Operations
 
 ## Optional
 - [Full text for LLMs](https://www.gl-ventures.at/llms-full.txt)

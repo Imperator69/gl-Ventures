@@ -41,6 +41,70 @@ document.querySelectorAll('.disclosure').forEach(detail => {
   });
 });
 
+/* Google Analytics, only with consent. The tag ID comes from <html data-gtag>; without
+   one this whole block is inert. Nothing is requested from Google before "accept". */
+const tagId = root.dataset.gtag;
+const consentBox = document.getElementById('consent');
+if (tagId && consentBox) {
+  const KEY = 'glv-consent';
+  const stored = () => { try { return localStorage.getItem(KEY); } catch (error) { return null; } };
+  const store = value => { try { localStorage.setItem(KEY, value); } catch (error) { /* private mode */ } };
+  let loaded = false;
+
+  function loadTag() {
+    window['ga-disable-' + tagId] = false;
+    if (loaded) return;
+    loaded = true;
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function gtag() { window.dataLayer.push(arguments); };
+    window.gtag('consent', 'default', { analytics_storage: 'granted', ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
+    window.gtag('js', new Date());
+    window.gtag('config', tagId);
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(tagId);
+    document.head.appendChild(script);
+  }
+  function unloadTag() {
+    window['ga-disable-' + tagId] = true;
+    if (window.gtag) window.gtag('consent', 'update', { analytics_storage: 'denied' });
+    const hosts = [location.hostname, '.' + location.hostname, '.' + location.hostname.split('.').slice(-2).join('.')];
+    document.cookie.split(';').map(cookie => cookie.split('=')[0].trim()).filter(name => name.startsWith('_ga')).forEach(name => {
+      document.cookie = `${name}=; Max-Age=0; path=/`;
+      hosts.forEach(host => { document.cookie = `${name}=; Max-Age=0; path=/; domain=${host}`; });
+    });
+  }
+  function showConsent(show) {
+    consentBox.hidden = !show;
+    root.classList.toggle('consent-open', show);
+  }
+  consentBox.addEventListener('click', event => {
+    const choice = event.target.closest('[data-consent]');
+    if (!choice) return;
+    store(choice.dataset.consent);
+    if (choice.dataset.consent === 'granted') loadTag(); else unloadTag();
+    showConsent(false);
+  });
+  document.querySelectorAll('[data-consent-open]').forEach(button => button.addEventListener('click', () => {
+    showConsent(true);
+    consentBox.querySelector('button').focus();
+  }));
+  if (stored() === 'granted') loadTag();
+  else if (stored() !== 'denied') showConsent(true);
+
+  /* Which contact option gets used: phone, email, saved contact or LinkedIn. */
+  document.addEventListener('click', event => {
+    const link = event.target.closest('a[href]');
+    if (!link || !window.gtag) return;
+    const href = link.getAttribute('href');
+    const method = href.startsWith('tel:') ? 'phone' : href.startsWith('mailto:') ? 'email'
+      : href.endsWith('.vcf') ? 'vcard' : href.includes('linkedin.com') ? 'linkedin' : null;
+    if (!method) return;
+    const card = link.closest('.contact-card, .person');
+    window.gtag('event', 'contact_click', { method, contact: card ? card.id.replace('contact-', '') : 'other' });
+  });
+}
+
 /* Services: on large screens the section pins and the three services replace
    each other while scrolling. Elsewhere they stay a normal list of cards. */
 const services = document.querySelector('.services-section');

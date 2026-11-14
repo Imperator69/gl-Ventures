@@ -42,6 +42,7 @@ Manuell geht es weiterhin: Inhalt von `public/` (inkl. `.htaccess`) per FTP ins 
 - `/`, `/en/`: Startseite
 - `/leistungen/{complex-services,strategic-advisory,venture-building}/` und `/en/services/...`: Leistungsseiten
 - `/impressum/`, `/datenschutz/`, `/en/legal-notice/`, `/en/privacy/`
+- `/team/dominik-lerch/`, `/team/gianluca-graf/` und `/en/team/...`: Partnerprofile
 - `/404.html`
 - `/vcard/dominik-lerch.vcf`, `/vcard/gianluca-graf.vcf`: Kontakt speichern (mit Foto)
 
@@ -58,16 +59,35 @@ Manuell geht es weiterhin: Inhalt von `public/` (inkl. `.htaccess`) per FTP ins 
 - Kontaktkarten: Anrufen, E-Mail, Kontakt speichern (vCard), LinkedIn, große Tippflächen
 - Mobil erscheint nach dem Hero eine Leiste mit beiden Partnern (springt zur jeweiligen Kontaktkarte)
 
-## SEO / KI-Suche
+## SEO, AEO und KI-Suche
 
 - Pro Seite: Title, Description, Canonical, hreflang DE/EN/x-default, Open Graph, Twitter Card
-- JSON-LD: Organization + ProfessionalService, WebSite, WebPage, Service (mit Leistungsbausteinen), Person, FAQPage, BreadcrumbList
+- JSON-LD: Organization + ProfessionalService, WebSite, WebPage (Startseite mit `speakable`), Service (mit Leistungsbausteinen und Zielgruppen), Person, ProfilePage, FAQPage, BreadcrumbList
+- Kurze, sichtbare Antworten: Kurzprofil „auf einen Blick“ neben der FAQ, erste FAQ-Antwort jeweils aufgeklappt, FAQ mit Fragen zu Personen und zur Abgrenzung der Leistungen
+- Partnerprofile als eigene Seiten (Namenssuche nach Visitenkarten-Kontakt)
 - `sitemap.xml` mit hreflang, `robots.txt` erlaubt Such- und KI-Crawler ausdrücklich
-- `llms.txt` (Kurzfassung) und `llms-full.txt` (Volltext) für KI-Assistenten, automatisch aus `content.py`
-- Keine Cookies, kein Tracking, keine externen Ressourcen (DSGVO, Performance)
+- `llms.txt` (Kurzfassung mit Kurzantworten) und `llms-full.txt` (Volltext) für KI-Assistenten, automatisch aus `content.py`
+- IndexNow: Nach jedem Deploy meldet `tools/indexnow.py` alle URLs an Bing (Grundlage auch für ChatGPT-Suche und Copilot). Der Schlüssel `SITE["indexnow_key"]` ist öffentlich und liegt als `<key>.txt` im Webroot
+
+## Google Tag, Analytics und Search Console
+
+Alles wird in `src/content.py` unter `SITE["tracking"]` eingetragen. Leere Werte bedeuten: ausgeschaltet.
+
+| Feld | Woher | Wirkung |
+|---|---|---|
+| `google_tag_id` | Google Analytics → Verwaltung → Datenstreams → Web → Mess-ID (`G-...`) | Einwilligungs-Banner, Analytics nach Zustimmung, Abschnitt in der Datenschutzerklärung, Google-Freigaben in der CSP, „Cookie-Einstellungen“ im Footer |
+| `google_site_verification` | Search Console → Property `https://www.gl-ventures.at` (URL-Präfix) → Bestätigung per HTML-Tag → Wert hinter `content=` | Meta-Tag zur Bestätigung |
+| `bing_site_verification` | Bing Webmaster Tools → HTML-Meta-Tag | Meta-Tag zur Bestätigung |
+
+- Ohne Zustimmung wird nichts von Google geladen und kein Cookie gesetzt. Die Entscheidung liegt im `localStorage` (`glv-consent`).
+- Gemessen wird zusätzlich das Ereignis `contact_click` (Telefon, E-Mail, Kontakt speichern, LinkedIn).
+- GTM-Container (`GTM-...`) werden nicht unterstützt, weil sie Inline-Skripte brauchen, die die CSP sperrt.
+- Zum lokalen Testen: `GOOGLE_TAG_ID=G-TEST123 python3 build.py`.
+- In Google Analytics einstellen: Datenaufbewahrung höchstens 14 Monate, Google-Signale aus, Zusatz zur Datenverarbeitung akzeptieren. Darauf verlässt sich der Text der Datenschutzerklärung.
 
 ## Offen
 
 - Impressum: derzeit GG Beratung mit Anschrift und Kontakt. Firmenbuchnummer, UID, Rechtsform und Gewerbe ergänzen, sobald feststeht, wer die Seite dauerhaft betreibt.
 - Datenschutz: Auftragsverarbeitungsvertrag mit World4You bestätigen.
-- Nach Go-live: Google Search Console und Bing Webmaster Tools verifizieren, Sitemap einreichen; Google-Unternehmensprofil anlegen und unter `sameAs` in `build.py` verlinken.
+- Mess-ID und Bestätigungscodes eintragen (siehe oben), danach in Search Console und Bing Webmaster Tools die Sitemap einreichen.
+- Google-Unternehmensprofil und LinkedIn-Firmenseite anlegen und unter `sameAs` in `build.py` verlinken.
