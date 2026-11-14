@@ -103,12 +103,16 @@ if (services && panels.length) {
   if (pinned && initial >= 0) window.addEventListener('load', () => goToPanel(initial, false));
 }
 
-/* One scroll handler: header state, progress bar, hero depth, portrait drift,
-   pinned services and the mobile quick-contact bar. */
+/* One scroll handler: header state, progress bar, current nav section, hero depth,
+   portrait drift, pinned services and the mobile quick-contact bar. */
 const progressBar = header.querySelector('.scroll-progress');
 const hero = document.querySelector('.hero, .page-hero');
 const drifting = [...document.querySelectorAll('[data-drift]')];
 const quick = document.querySelector('.quick-contact');
+const spyLinks = [...nav.querySelectorAll('a[href^="#"]')]
+  .map(link => ({ link, section: document.querySelector(link.getAttribute('href')) }))
+  .filter(item => item.section);
+let activeLink = null;
 const contact = document.getElementById('contact');
 let ticking = false;
 
@@ -130,6 +134,16 @@ function onScroll() {
     });
   }
   updateServices();
+  /* Highlight the section that crosses the middle of the screen; only touch the DOM when it changes. */
+  let current = null;
+  for (const item of spyLinks) {
+    if (item.section.getBoundingClientRect().top <= viewport * 0.45) current = item.link;
+  }
+  if (current !== activeLink) {
+    if (activeLink) activeLink.classList.remove('active');
+    if (current) current.classList.add('active');
+    activeLink = current;
+  }
   if (quick) {
     const atContact = contact && contact.getBoundingClientRect().top < viewport * 0.85;
     quick.classList.toggle('show', y > viewport * 0.6 && !atContact);
@@ -142,7 +156,7 @@ window.addEventListener('scroll', requestTick, { passive: true });
 window.addEventListener('resize', requestTick);
 onScroll();
 
-/* Reveal on scroll (siblings stagger) and current section in the nav. */
+/* Reveal on scroll; siblings stagger. */
 if ('IntersectionObserver' in window) {
   const reveal = new IntersectionObserver(entries => {
     entries.forEach(entry => {
@@ -156,22 +170,6 @@ if ('IntersectionObserver' in window) {
     }
     reveal.observe(el);
   });
-
-  const links = new Map();
-  nav.querySelectorAll('a[href^="#"]').forEach(a => {
-    const section = document.querySelector(a.getAttribute('href'));
-    if (section) links.set(section, a);
-  });
-  if (links.size) {
-    const spy = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (!entry.isIntersecting) return;
-        links.forEach(a => a.classList.remove('active'));
-        links.get(entry.target).classList.add('active');
-      });
-    }, { rootMargin: '-45% 0px -50% 0px' });
-    links.forEach((_, section) => spy.observe(section));
-  }
 } else {
   document.querySelectorAll('.reveal, .steps').forEach(el => el.classList.add('in'));
 }
