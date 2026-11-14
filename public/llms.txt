@@ -1,9 +1,9 @@
 # GL Ventures
 
-> GL Ventures GmbH is a boutique advisory based in Vienna, Austria, offering Complex Services, Strategic Advisory and Venture Building to businesses, investors and public stakeholders. Sectors: defense, energy, innovation, blockchain, digitalisation. Languages: German, English.
+> GL Ventures is a boutique advisory based in Vienna, Austria, offering Complex Services, Strategic Advisory and Venture Building to businesses, investors and public stakeholders. Sectors: defense, energy, innovation, blockchain, digitalisation. Languages: German, English.
 
 ## Key facts
-- Legal name: GL Ventures GmbH
+- Website operator (legal notice): GG Beratung
 - Address: Wollzeile 18/10, 1010 Vienna, Austria
 - Partners: Dominik Lerch (Managing Partner · Strategy & Venture Building, lerch@gl-ventures.at, +43 664 621 4729); Gianluca Graf (Managing Partner · Ventures & Operations, graf@gl-ventures.at, +43 660 646 3329)
 - Services: Complex Services, Strategic Advisory, Venture Building
